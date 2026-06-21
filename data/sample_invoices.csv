@@ -1,0 +1,11 @@
+invoice_id,vendor,due_date,amount,status,category
+INV-001,Vendor B,2026-06-20,1350,unpaid,supplier
+INV-002,AWS,2026-06-25,420,unpaid,software
+INV-003,Office Rent,2026-07-01,1800,unpaid,rent
+INV-004,Consultant A,2026-06-10,800,overdue,service
+INV-005,Adobe,2026-06-28,59.99,unpaid,software
+INV-006,Utility Company,2026-06-30,160,unpaid,utility
+INV-007,Vendor X,2026-07-05,2600,unpaid,supplier
+INV-008,Gusto,2026-07-08,280,paid,payroll
+INV-009,Marketing Agency,2026-07-12,950,unpaid,service
+INV-010,Insurance Provider,2026-07-15,430,unpaid,insurance

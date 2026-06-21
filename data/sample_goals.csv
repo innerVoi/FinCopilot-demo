@@ -1,0 +1,7 @@
+goal_id,goal_name,target_amount,current_amount,due_date,priority
+G001,Maintain 30-day cash buffer,5000,1800,2026-08-31,high
+G002,Build tax reserve,3000,900,2026-09-30,high
+G003,Reduce software subscription cost,300,60,2026-07-31,medium
+G004,Stabilize vendor payment reserve,2500,700,2026-10-31,high
+G005,Build business operating reserve,8000,2600,2026-12-31,high
+G006,Prepare contractor payroll buffer,4000,1200,2026-11-30,medium

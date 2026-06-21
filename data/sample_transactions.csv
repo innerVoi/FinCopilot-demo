@@ -1,0 +1,31 @@
+date,description,merchant,amount,type,account
+2026-06-01,Client payment from Alpha Studio,Alpha Studio,4800,income,business
+2026-06-03,Client payment from Beta Retail,Beta Retail,3200,income,business
+2026-06-04,Client retainer payment,Client A,2800,income,business
+2026-06-05,Office rent payment,Office Rent,-1800,expense,business
+2026-06-06,Cloud infrastructure subscription,AWS,-420,expense,business
+2026-06-07,Software API usage,OpenAI,-120,expense,business
+2026-06-08,Marketing campaign payment,Marketing Agency,-950,expense,business
+2026-06-09,Office supplies,Office Depot,-180,expense,business
+2026-06-10,Vendor invoice payment,Vendor B,-1350,expense,business
+2026-06-11,Team lunch after client delivery,Local Restaurant,-86,expense,business
+2026-06-12,Payroll service fee,Gusto,-280,expense,business
+2026-06-13,Utility and internet bill,Utility Company,-160,expense,business
+2026-06-14,Client payment from Gamma Labs,Gamma Labs,1900,income,business
+2026-06-15,Large vendor payment,Vendor X,-2600,expense,business
+2026-06-16,Tax reserve transfer,IRS,-700,expense,business
+2026-06-17,Project software renewal,Adobe,-59.99,expense,business
+2026-06-18,Unexpected cloud overage,AWS,-980,expense,business
+2026-06-19,Ride sharing to client site,Uber,-34.5,expense,business
+2026-06-20,Ride sharing to supplier meeting,Lyft,-31.2,expense,business
+2026-06-20,Duplicate software subscription,Adobe,-59.99,expense,business
+2026-06-21,Duplicate software subscription,Adobe,-59.99,expense,business
+2026-06-22,Emergency equipment purchase,Unknown Store,-980,expense,business
+2026-06-23,Cloud overage charge,AWS,-620,expense,business
+2026-06-24,Coworking day passes,Coworking Space,-210,expense,business
+2026-06-25,Bookkeeping software subscription,QuickBooks,-45,expense,business
+2026-06-26,Insurance premium,Insurance Provider,-430,expense,business
+2026-06-27,Freelance contractor payment,Contractor A,-880,expense,business
+2026-06-28,Client payment from Delta Cafe,Delta Cafe,1600,income,business
+2026-06-29,Payment processing fee,Stripe,-95,expense,business
+2026-06-30,Large team dinner after launch,Unknown Restaurant,-520,expense,business
