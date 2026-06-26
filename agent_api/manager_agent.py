@@ -15,7 +15,7 @@ def build_manager_agent_messages(user_query: str, context_summary: dict | None =
     """
     system_prompt = (
         f"{get_agent_prompt(MANAGER_AGENT)}\n\n"
-        "你必须只输出 JSON，不要输出 Markdown，不要输出解释。"
+        "You must output JSON only. Do not output Markdown or explanations."
     )
     user_prompt = build_manager_prompt_with_context(user_query, context_summary)
     return [
@@ -74,7 +74,7 @@ def call_manager_agent_api(user_query: str, context_summary: dict | None = None)
 
     client = get_openai_client()
     if client is None:
-        return _fallback_result(query, ["OpenAI client 不可用。"])
+        return _fallback_result(query, ["OpenAI client is unavailable."])
 
     try:
         raw_output = create_chat_completion_text(
@@ -83,12 +83,12 @@ def call_manager_agent_api(user_query: str, context_summary: dict | None = None)
             messages=build_manager_agent_messages(query, context_summary),
         )
     except Exception as error:
-        return _fallback_result(query, [f"Manager Agent API 调用失败：{sanitize_openai_error(error)}"])
+        return _fallback_result(query, [f"Manager Agent API call failed: {sanitize_openai_error(error)}"])
 
     print(f'raw_output={raw_output}')
     parsed = extract_json_from_text(raw_output)
     if parsed is None:
-        return _fallback_result(query, ["Manager Agent 输出不是合法 JSON。"], raw_output=raw_output)
+        return _fallback_result(query, ["Manager Agent output is not valid JSON."], raw_output=raw_output)
     
     manager_plan = validate_manager_plan(parsed)
     safety_result = validate_manager_plan_safety(manager_plan)

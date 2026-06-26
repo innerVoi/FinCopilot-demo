@@ -110,56 +110,54 @@ def build_initial_conclusion(
     plan_status = (task_plan or {}).get("plan_status", "unknown")
     execution_summary = (tool_execution or {}).get("execution_summary", {})
     execution_note = (
-        f"本次计划状态为 {plan_status}，"
-        f"复用 {execution_summary.get('reused', 0)} 个结果，"
-        f"新执行 {execution_summary.get('executed', 0)} 个工具，"
-        f"跳过 {execution_summary.get('skipped', 0)} 个工具。"
+        f"Plan status is {plan_status}. "
+        f"{execution_summary.get('reused', 0)} results were reused, "
+        f"{execution_summary.get('executed', 0)} tools were executed, and "
+        f"{execution_summary.get('skipped', 0)} tools were skipped. "
     )
     action_summary = action_summary or {}
     action_note = (
-        f"Agent 已根据当前分析结果生成 {action_summary.get('total', 0)} 个行动项，"
-        f"其中高优先级 {action_summary.get('high', 0)} 个，"
-        f"中优先级 {action_summary.get('medium', 0)} 个。"
+        f"The Agent generated {action_summary.get('total', 0)} action items from the current analysis, "
+        f"including {action_summary.get('high', 0)} high-priority and "
+        f"{action_summary.get('medium', 0)} medium-priority items. "
     )
 
     if task_id == "cashflow_safety_check":
         return (
-            "根据当前上传数据，系统已完成预算、发票、现金流和异常支出的初步检查。"
-            f"当前现金流风险等级为 {tool_result_summary.get('cashflow_risk_level', 'unknown')}，"
-            f"未来 30 天预计余额为 {tool_result_summary.get('projected_balance_30d', 0.0):.2f}。"
+            "Based on the current uploaded data, the system completed an initial review of budget, invoices, cash flow, and suspicious expenses. "
+            f"Current cash-flow risk is {tool_result_summary.get('cashflow_risk_level', 'unknown')}, "
+            f"and projected balance over the next 30 days is {tool_result_summary.get('projected_balance_30d', 0.0):.2f}. "
             f"{execution_note}"
             f"{action_note}"
-            "Agent 已将现金流风险、发票压力和异常支出转化为行动清单。"
-            "请优先处理高优先级的现金流和发票任务。"
-            "但由于真实账户余额和未来客户回款可能缺失，该结论仍需要用户补充信息后进一步确认。"
+            "The Agent converted cash-flow risk, invoice pressure, and suspicious expenses into action items. "
+            "Prioritize high-priority cash-flow and invoice tasks. "
+            "Because actual account balance and future customer collections may be missing, this conclusion should be confirmed after the user adds more information."
         )
 
     if task_id == "suspicious_expense_review":
         return (
-            "系统已结合规则/统计识别和 LOF 模型检测，对当前交易进行异常筛查。"
-            f"当前发现 {tool_result_summary.get('rule_anomaly_count', 0)} 条规则异常，"
-            f"以及 {tool_result_summary.get('lof_high_risk_count', 0)} 条高风险模型异常。"
+            "The system screened current transactions using rule/statistical checks and the LOF model. "
+            f"It found {tool_result_summary.get('rule_anomaly_count', 0)} rule anomalies "
+            f"and {tool_result_summary.get('lof_high_risk_count', 0)} high-risk model anomalies. "
             f"{execution_note}"
             f"{action_note}"
-            "Agent 已将规则异常和模型高风险交易转化为核查任务。"
-            "请优先处理高风险、大额或缺少业务解释的交易。"
-            "后续应将这些异常转化为核查任务。"
+            "The Agent converted rule anomalies and high-risk model transactions into review tasks. "
+            "Prioritize high-risk, large, or unexplained transactions."
         )
 
     if task_id == "goal_action_plan":
         return (
-            "系统已分析当前财务目标进度。"
-            f"当前共有 {tool_result_summary.get('goal_count', 0)} 个目标，"
-            f"其中 {tool_result_summary.get('high_risk_goal_count', 0)} 个为高风险目标，"
-            f"整体完成率为 {tool_result_summary.get('overall_progress_percent', 0.0):.1f}%。"
+            "The system analyzed current financial goal progress. "
+            f"There are {tool_result_summary.get('goal_count', 0)} goals, "
+            f"including {tool_result_summary.get('high_risk_goal_count', 0)} high-risk goals, "
+            f"with overall progress at {tool_result_summary.get('overall_progress_percent', 0.0):.1f}%. "
             f"{execution_note}"
             f"{action_note}"
-            "Agent 已将高风险财务目标转化为行动项。"
-            "请优先关注高优先级且剩余缺口较大的目标。"
-            "后续应围绕高优先级目标生成行动计划。"
+            "The Agent converted high-risk financial goals into action items. "
+            "Focus first on high-priority goals with larger remaining gaps."
         )
 
-    return f"系统已完成当前任务的初步检查。{execution_note}{action_note}"
+    return f"The system completed an initial review for the current task. {execution_note}{action_note}"
 
 
 def build_context_impact_summary(task_id: str, enriched_context: dict) -> str:
@@ -175,12 +173,12 @@ def build_context_impact_summary(task_id: str, enriched_context: dict) -> str:
             for key in ["current_cash_balance", "expected_receivables_30d"]
         ):
             return (
-                "Agent 已使用用户补充的真实余额和未来回款信息修正现金流视图。"
-                f"调整后未来 30 天预计余额为 {cashflow.get('adjusted_projected_balance_30d', 0.0):.2f}，"
-                f"风险等级从 {cashflow.get('base_risk_level', 'unknown')} "
-                f"变为 {cashflow.get('adjusted_risk_level', 'unknown')}。"
+                "The Agent used the user-provided actual balance and future receivables to adjust the cash-flow view. "
+                f"Adjusted projected balance over the next 30 days is {cashflow.get('adjusted_projected_balance_30d', 0.0):.2f}, "
+                f"and risk changed from {cashflow.get('base_risk_level', 'unknown')} "
+                f"to {cashflow.get('adjusted_risk_level', 'unknown')}."
             )
-        return "当前仍基于上传流水估算现金流，未使用真实账户余额或未来回款信息。"
+        return "Cash flow is still estimated from uploaded transactions only; actual account balance or future receivables were not used."
 
     if task_id == "suspicious_expense_review":
         if any(
@@ -192,10 +190,10 @@ def build_context_impact_summary(task_id: str, enriched_context: dict) -> str:
             ]
         ):
             return (
-                "Agent 已记录用户提供的已知正常大额付款、常用供应商或交易背景。"
-                "后续生成行动清单时，应优先核查仍无法解释的高风险交易。"
+                "The Agent recorded user-provided known normal large payments, recurring suppliers, or transaction context. "
+                "Future action items should prioritize high-risk transactions that still cannot be explained."
             )
-        return "当前异常判断主要基于规则和模型结果，尚未结合业务背景。"
+        return "Current anomaly judgment is mainly based on rule and model results, without additional business context yet."
 
     if task_id == "goal_action_plan":
         if any(
@@ -203,12 +201,12 @@ def build_context_impact_summary(task_id: str, enriched_context: dict) -> str:
             for key in ["goal_priority_confirmation", "expected_monthly_savings_capacity"]
         ):
             return (
-                "Agent 已记录用户确认的目标优先级和月度储备能力。"
-                "后续目标行动计划将优先围绕该目标生成。"
+                "The Agent recorded the user-confirmed goal priority and monthly reserve capacity. "
+                "Future goal action planning will focus on that priority."
             )
-        return "当前目标分析主要基于上传 goals.csv 和预算结果，尚未结合用户确认的目标优先级。"
+        return "Current goal analysis is mainly based on uploaded goals.csv and budget results, without user-confirmed goal priority yet."
 
-    return "当前尚未形成补充信息影响说明。"
+    return "No additional-information impact summary is available yet."
 
 
 def build_agent_workspace(
@@ -291,7 +289,7 @@ def build_agent_workspace(
         "progress_summary_text": progress_summary_text,
         "agent_progress_conclusion": agent_progress_conclusion,
         "initial_conclusion": conclusion,
-        "next_step_hint": "当前 Agent 工作流已经形成完整报告。你可以复制或下载 Markdown 报告，用于演示、复盘或后续迭代。",
+        "next_step_hint": "The current Agent workflow has produced a complete report. You can copy or download the Markdown report for demo, review, or future iteration.",
     }
     workspace["workflow_report_markdown"] = build_agent_workflow_report(workspace)
     return workspace

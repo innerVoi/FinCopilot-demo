@@ -119,12 +119,13 @@ def detect_large_amount_anomalies(
 
             risk_level = "high" if abs_amount >= severe_threshold else "medium"
             reason = (
-                f"该笔支出金额为 {abs_amount:.2f}，高于 {category} 类别的常见水平，"
-                "可能需要核查是否为一次性大额消费、误分类或异常扣费。"
+                f"This expense amount is {abs_amount:.2f}, higher than the usual level "
+                f"for category {category}. Review whether it is a one-off large purchase, "
+                "miscategorized item, or unusual charge."
             )
             recommended_action = (
-                "请核查原始交易凭证，确认该笔支出是否真实、是否应重新分类，"
-                "或是否属于一次性大额支出。"
+                "Review the source transaction record and confirm whether this expense is valid, "
+                "should be recategorized, or is a one-off large expense."
             )
             anomaly_rows.append(
                 _build_anomaly_row(
@@ -176,10 +177,10 @@ def detect_duplicate_charges(
                 continue
 
             reason = (
-                f"{merchant} 在 {days_window} 天内出现相近金额的多次扣费，"
-                "可能是正常订阅续费，也可能是重复扣费。"
+                f"{merchant} has multiple charges with similar amounts within {days_window} days. "
+                "This may be a normal subscription renewal or a duplicate charge."
             )
-            recommended_action = "请检查该商户账单或订阅记录，确认是否存在重复扣款。"
+            recommended_action = "Check this merchant's invoice or subscription record to confirm whether duplicate billing occurred."
             anomaly_rows.append(
                 _build_anomaly_row(
                     current_row,
@@ -211,10 +212,10 @@ def detect_rare_merchant_anomalies(transactions_df, min_amount=300.0, max_count=
 
         risk_level = "high" if abs_amount >= 1000 else "medium"
         reason = (
-            "该商户在当前数据中出现频率较低，且交易金额较高，"
-            "因此被标记为罕见商户支出。"
+            "This merchant appears rarely in the current data and the transaction amount is relatively high, "
+            "so it is flagged as a rare-merchant expense."
         )
-        recommended_action = "请确认该商户是否为已知商户，并核查该笔交易是否属于授权支出。"
+        recommended_action = "Confirm whether this is a known merchant and whether the transaction was authorized."
         anomaly_rows.append(
             _build_anomaly_row(
                 row,
@@ -258,11 +259,11 @@ def detect_category_spikes(
         )
         for _, row in category_rows.iterrows():
             reason = (
-                f"{category} 类别支出占本期总支出的 {expense_share:.1%}，"
-                "支出集中度较高，可能对预算或现金流造成压力。"
+                f"Category {category} accounts for {expense_share:.1%} of total expenses in this period, "
+                "which may pressure budget or cash flow."
             )
             recommended_action = (
-                "建议检查该类别下的大额支出是否必要，并确认是否需要调整预算安排。"
+                "Review whether large expenses in this category are necessary and whether budget allocation should be adjusted."
             )
             anomaly_rows.append(
                 _build_anomaly_row(
@@ -291,8 +292,8 @@ def detect_unusual_time_anomalies(transactions_df, min_amount=200.0):
     anomaly_rows = []
     for _, row in weekend_df.iterrows():
         risk_level = "high" if row["abs_amount"] >= 500 else "medium"
-        reason = "该笔交易发生在周末，且金额较高，可能需要核查是否属于计划内支出。"
-        recommended_action = "请确认该笔周末大额支出是否为本人或企业授权支出。"
+        reason = "This transaction occurred on a weekend and has a relatively high amount, so it may need review."
+        recommended_action = "Confirm whether this large weekend expense was authorized and planned."
         anomaly_rows.append(
             _build_anomaly_row(
                 row,
@@ -334,11 +335,11 @@ def detect_invoice_pressure(
         else "medium"
     )
     if overdue_invoice_amount > 0 and due_30d_amount >= due_30d_threshold:
-        reason = "未来 30 天待支付发票金额较高，且存在逾期发票，可能对现金流造成压力。"
+        reason = "Invoices due in the next 30 days are high and overdue invoices exist, which may pressure cash flow."
     elif due_30d_amount >= due_30d_threshold:
-        reason = "未来 30 天待支付发票金额较高，可能对现金流造成压力。"
+        reason = "Invoices due in the next 30 days are high and may pressure cash flow."
     else:
-        reason = "当前存在逾期发票，可能影响付款计划和现金流稳定性。"
+        reason = "There are overdue invoices, which may affect payment planning and cash-flow stability."
 
     row = {
         "date": reference_date,
@@ -350,7 +351,7 @@ def detect_invoice_pressure(
         "account": "business",
         "category": "invoice",
     }
-    recommended_action = "建议优先核查逾期发票，并安排未来 30 天的付款计划。"
+    recommended_action = "Prioritize overdue invoice review and plan payments for the next 30 days."
     return _rows_to_df(
         [
             _build_anomaly_row(

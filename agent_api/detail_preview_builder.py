@@ -1,4 +1,4 @@
-SAFETY_NOTE = "本预览仅用于财务整理、风险提醒和教育性支持，不构成投资、税务、法律、债务处置或专业财务建议；系统不会认定欺诈，也不会执行付款或转账。"
+SAFETY_NOTE = "This preview is for financial organization, risk reminders, and educational support only. It is not investment, tax, legal, debt-resolution, or professional financial advice. The system does not determine fraud and does not execute payments or transfers."
 
 
 def safe_get(data: dict | None, key: str, default=None):
@@ -34,6 +34,16 @@ def _clip_text(value, max_length: int = 1000) -> str:
     if len(text) <= max_length:
         return text
     return text[: max_length - 1].rstrip() + "..."
+
+
+def _extract_report_summary(report_markdown: str, max_length: int = 900) -> str:
+    lines = [
+        line.strip()
+        for line in str(report_markdown or "").splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    ]
+    summary = "\n\n".join(lines[:4])
+    return _clip_text(summary, max_length=max_length) if summary else "This report has been generated. Expand it to view the full content."
 
 
 def _merge_dicts(*items: dict | None) -> dict:
@@ -88,11 +98,11 @@ def build_data_overview(agent_context_summary: dict | None) -> dict:
     availability = _as_dict(safe_get(agent_context_summary, "data_availability", {}))
     date_min = snapshot.get("date_min") or ""
     date_max = snapshot.get("date_max") or ""
-    date_range = f"{date_min} 至 {date_max}" if date_min or date_max else ""
+    date_range = f"{date_min} to {date_max}" if date_min or date_max else ""
     missing_items = ensure_list(availability.get("missing_items"))
     notes = []
     if missing_items:
-        notes.append("部分数据未上传或不可用，预览仅基于当前可用摘要。")
+        notes.append("Some data is not uploaded or unavailable, so the preview is based only on currently available summaries.")
     return {
         "transaction_count": snapshot.get("transaction_count", 0),
         "invoice_count": snapshot.get("invoice_count", 0),
@@ -131,7 +141,7 @@ def build_invoice_preview(turn_result: dict | None, agent_context_summary: dict 
     overdue_count = merged.get("overdue_invoice_count", 0)
     notes = []
     if overdue_count:
-        notes.append("存在逾期发票，请结合原始发票和合同核查。")
+        notes.append("Overdue invoices exist. Review them against original invoices and contracts.")
     return {
         "total_invoice_amount": merged.get("total_invoice_amount", 0.0),
         "unpaid_invoice_amount": merged.get("unpaid_invoice_amount", 0.0),
@@ -188,7 +198,7 @@ def _normalize_action_item(item, source: str = "agent_chat") -> dict | None:
             "title": title,
             "priority": item.get("priority", "medium"),
             "status": item.get("status", "pending"),
-            "suggested_deadline": item.get("suggested_deadline", "3 天内"),
+            "suggested_deadline": item.get("suggested_deadline", "within 3 days"),
             "source": item.get("source", source),
         }
     title = str(item or "").strip()
@@ -199,7 +209,7 @@ def _normalize_action_item(item, source: str = "agent_chat") -> dict | None:
         "title": title,
         "priority": "medium",
         "status": "pending",
-        "suggested_deadline": "3 天内",
+        "suggested_deadline": "within 3 days",
         "source": source,
     }
 
@@ -224,11 +234,17 @@ def build_action_preview(turn_result: dict | None, agent_context_summary: dict |
         priority = str(item.get("priority", "medium")).lower()
         if priority in priority_counts:
             priority_counts[priority] += 1
+    persistence_result = _as_dict(turn_result.get("persistence_result"))
+    persisted_actions = ensure_list(persistence_result.get("actions"))
+    pending_count = sum(1 for item in persisted_actions if isinstance(item, dict) and item.get("status") == "pending")
+    handled_count = sum(1 for item in persisted_actions if isinstance(item, dict) and item.get("status") != "pending")
     return {
         "total": len(items),
         "high": priority_counts["high"],
         "medium": priority_counts["medium"],
         "low": priority_counts["low"],
+        "pending": pending_count,
+        "handled": handled_count,
         "items": items[:5],
     }
 
@@ -241,10 +257,31 @@ def build_report_preview(turn_result: dict | None) -> dict:
     trace_markdown = str(safe_get(turn_result, "trace_markdown", "") or "")
     return {
         "has_report": bool(report.strip()),
-        "report_title": "FinCopilot Multi-Agent 对话报告",
+        "report_title": "FinCopilot Multi-Agent Conversation Report",
+        "report_summary": _extract_report_summary(report) if report.strip() else "",
         "report_preview": _clip_text(report, 1000),
         "report_length": len(report),
         "has_trace_markdown": bool(trace_markdown.strip()),
+    }
+
+
+def build_memory_preview(turn_result: dict | None) -> dict:
+    """
+    Build memory preview from turn_result["memory_context"].
+    """
+    memory_context = _as_dict(safe_get(turn_result, "memory_context", {}))
+    return {
+        "memory_count": memory_context.get("memory_count", 0),
+        "used_memory_ids": ensure_list(memory_context.get("used_memory_ids")),
+        "memory_notes": memory_context.get("memory_notes", ""),
+        "known_normal_payments": ensure_list(memory_context.get("known_normal_payments")),
+        "known_suppliers": ensure_list(memory_context.get("known_suppliers")),
+        "cash_context": ensure_list(memory_context.get("cash_context")),
+        "expected_receivables": ensure_list(memory_context.get("expected_receivables")),
+        "recurring_expenses": ensure_list(memory_context.get("recurring_expenses")),
+        "business_rules": ensure_list(memory_context.get("business_rules")),
+        "user_preferences": ensure_list(memory_context.get("user_preferences")),
+        "known_risks": ensure_list(memory_context.get("known_risks")),
     }
 
 
@@ -287,7 +324,7 @@ def build_tool_preview(turn_result: dict | None) -> dict:
             success += 1
         elif status == "failed":
             failed += 1
-        summary = "返回可用摘要" if status == "success" else result.get("error", "工具未返回可用摘要")
+        summary = "Returned an available summary" if status == "success" else result.get("error", "Tool did not return an available summary")
         items.append(
             {
                 "tool_name": result.get("tool_name", ""),
@@ -335,54 +372,54 @@ def build_detail_navigation(turn_result: dict | None) -> list[dict]:
     intent = _get_manager_plan(turn_result).get("intent", "unknown")
     entries = [
         {
-            "label": "在当前页面展开详细预览",
-            "page": "Copilot 主界面",
-            "section": "详细结果预览",
-            "reason": "无需离开当前页面，可查看现金流、异常、行动项和报告预览。",
+            "label": "Expand the detailed preview on this page",
+            "page": "Copilot Home",
+            "section": "Detailed Result Preview",
+            "reason": "View cash flow, anomalies, action items, and report previews without leaving this page.",
         }
     ]
     if intent in {"cashflow_check", "invoice_or_payment_review"}:
         entries.append(
             {
-                "label": "查看完整现金流分析",
-                "page": "分析详情",
-                "section": "发票与现金流",
-                "reason": "查看完整现金流指标、发票压力和明细表。",
+                "label": "View full cash-flow analysis",
+                "page": "Analysis Details",
+                "section": "Invoices & Cash Flow",
+                "reason": "View full cash-flow metrics, invoice pressure, and detail tables.",
             }
         )
     elif intent == "expense_anomaly_review":
         entries.append(
             {
-                "label": "查看完整异常支出分析",
-                "page": "分析详情",
-                "section": "异常支出",
-                "reason": "查看规则异常、模型异常和明细证据。",
+                "label": "View full suspicious-expense analysis",
+                "page": "Analysis Details",
+                "section": "Suspicious Expenses",
+                "reason": "View rule-based anomalies, model anomalies, and detailed evidence.",
             }
         )
     elif intent in {"goal_or_budget_planning", "promotion_or_purchase_planning"}:
         entries.append(
             {
-                "label": "查看完整目标分析",
-                "page": "分析详情",
-                "section": "财务目标",
-                "reason": "查看目标进度、风险目标和预算影响。",
+                "label": "View full goal analysis",
+                "page": "Analysis Details",
+                "section": "Goals",
+                "reason": "View goal progress, risk goals, and budget impact.",
             }
         )
     else:
         entries.append(
             {
-                "label": "查看完整分析详情",
-                "page": "分析详情",
-                "section": "综合分析",
-                "reason": "查看预算、现金流、异常和目标的完整结果。",
+                "label": "View Full Analysis Details",
+                "page": "Analysis Details",
+                "section": "Overall Analysis",
+                "reason": "View full budget, cash-flow, anomaly, and goal results.",
             }
         )
     entries.append(
         {
-            "label": "查看行动与报告",
-            "page": "行动与报告",
-            "section": "行动项 / 报告",
-            "reason": "跟踪行动项状态并下载归档报告。",
+            "label": "Open Actions & Reports",
+            "page": "Actions & Reports",
+            "section": "Action Items / Reports",
+            "reason": "Track action item status and download archived reports.",
         }
     )
     return entries
@@ -399,6 +436,7 @@ def build_detail_preview(turn_result: dict | None, agent_context_summary: dict |
         "anomaly_preview": build_anomaly_preview(turn_result, agent_context_summary),
         "goal_preview": build_goal_preview(turn_result, agent_context_summary),
         "action_preview": build_action_preview(turn_result, agent_context_summary),
+        "memory_preview": build_memory_preview(turn_result),
         "report_preview": build_report_preview(turn_result),
         "trace_preview": build_trace_preview(turn_result),
         "tool_preview": build_tool_preview(turn_result),

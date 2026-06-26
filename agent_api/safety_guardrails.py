@@ -9,31 +9,30 @@ from agent_api.schemas import (
 
 
 PROHIBITED_PATTERNS = [
-    "你应该买",
-    "建议投资",
-    "稳赚",
-    "保证收益",
-    "一定盈利",
-    "一定亏损",
-    "这是欺诈",
-    "这是诈骗",
-    "欺诈",
-    "诈骗",
-    "违法",
-    "避税",
-    "逃税",
-    "法律上",
-    "起诉",
-    "破产",
-    "债务重组",
-    "自动付款",
-    "自动转账",
+    "you should buy",
+    "investment recommendation",
+    "guaranteed profit",
+    "guaranteed return",
+    "certain profit",
+    "certain loss",
+    "this is fraud",
+    "this is a scam",
+    "fraud",
+    "scam",
+    "illegal",
+    "tax evasion",
+    "legally speaking",
+    "sue",
+    "bankruptcy",
+    "debt restructuring",
+    "automatic payment",
+    "automatic transfer",
 ]
 
 AGENT_SAFETY_NOTE = (
-    "本分析仅用于财务整理、风险提醒和教育性支持，"
-    "不构成投资、税务、法律、债务处置或专业财务建议。"
-    "重要交易和财务决策请核查原始凭证，并在必要时咨询合格专业人士。"
+    "This analysis is for financial organization, risk reminders, and educational support only. "
+    "It is not investment, tax, legal, debt-resolution, or professional financial advice. "
+    "Review source documents before important financial decisions and consult qualified professionals when needed."
 )
 
 
@@ -59,16 +58,16 @@ def sanitize_agent_text(text: str | None) -> str:
     """
     safe_text = str(text or "")
     replacements = {
-        "这是欺诈": "可能存在风险，建议核查",
-        "这是诈骗": "可能存在风险，建议核查",
-        "欺诈": "可能存在风险，建议核查",
-        "诈骗": "可能存在风险，建议核查",
-        "稳赚": "存在不确定性",
-        "保证收益": "不能保证结果",
-        "一定盈利": "结果存在不确定性",
-        "一定亏损": "结果存在不确定性",
-        "自动付款": "人工核查后再处理付款",
-        "自动转账": "人工核查后再处理转账",
+        "this is fraud": "this may carry risk and should be reviewed",
+        "this is a scam": "this may carry risk and should be reviewed",
+        "fraud": "possible risk that needs review",
+        "scam": "possible risk that needs review",
+        "guaranteed profit": "outcome is uncertain",
+        "guaranteed return": "outcome cannot be guaranteed",
+        "certain profit": "outcome is uncertain",
+        "certain loss": "outcome is uncertain",
+        "automatic payment": "handle payment only after human review",
+        "automatic transfer": "handle transfer only after human review",
     }
     for source, target in replacements.items():
         safe_text = safe_text.replace(source, target)
@@ -125,7 +124,7 @@ def build_safe_error_response(user_query: str, error_message: str = "") -> dict:
     """
     response = get_default_agent_response(user_query=user_query, mode="fallback")
     response["final_answer"] = sanitize_agent_text(
-        "当前 Agent API 暂不可用，系统已回退到本地规则化能力。"
+        "The Agent API is currently unavailable, so the system has fallen back to local rule-based capability."
     )
     response["safety_note"] = AGENT_SAFETY_NOTE
     if error_message:
@@ -157,7 +156,7 @@ def validate_manager_plan_safety(plan: dict | None) -> dict:
 
     if not sanitized_plan.get("safety_notes"):
         sanitized_plan["safety_notes"] = [
-            "只做财务整理和风险提醒，不提供投资、税务、法律或债务处置建议。"
+            "Use this for financial organization and risk reminders only; do not provide investment, tax, legal, or debt-resolution advice."
         ]
     unknown_agents = [
         agent

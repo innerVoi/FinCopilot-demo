@@ -75,35 +75,35 @@ def template_explain_transaction_risk(row) -> dict:
     safe_row = row_to_safe_dict(row)
     branch = safe_row.get("anomaly_branch") or "unknown"
     risk_level = safe_row.get("risk_level") or "unknown"
-    merchant = safe_row.get("merchant") or "该商户"
+    merchant = safe_row.get("merchant") or "this merchant"
     amount = safe_row.get("amount")
     anomaly_type = safe_row.get("anomaly_type") or "model_score"
 
     risk_summary = (
-        f"{merchant} 的这条记录被系统标记为 {risk_level} 风险，"
-        "建议进一步核查其凭证、账单或分类。"
+        f"This record for {merchant} was flagged as {risk_level} risk. "
+        "Review its source documents, bills, or categorization."
     )
     if amount is not None:
         risk_summary = (
-            f"{merchant} 的金额 {amount} 记录被系统标记为 {risk_level} 风险，"
-            "建议进一步核查其凭证、账单或分类。"
+            f"The {amount} record for {merchant} was flagged as {risk_level} risk. "
+            "Review its source documents, bills, or categorization."
         )
 
     possible_reasons = [
-        f"该记录的异常分支为 {branch}。",
-        f"该记录的风险等级为 {risk_level}。",
+        f"The anomaly branch is {branch}.",
+        f"The risk level is {risk_level}.",
     ]
     if safe_row.get("reason"):
         possible_reasons.append(str(safe_row["reason"]))
     elif safe_row.get("model_evidence"):
-        possible_reasons.append(f"模型证据显示：{safe_row['model_evidence']}")
+        possible_reasons.append(f"Model evidence: {safe_row['model_evidence']}")
     else:
-        possible_reasons.append(f"系统识别的异常类型为 {anomaly_type}。")
+        possible_reasons.append(f"The system identified anomaly type {anomaly_type}.")
 
     recommended_actions = [
-        "核查原始交易凭证。",
-        "确认该交易是否为本人或企业授权支出。",
-        "必要时重新分类该交易，或将其记录为一次性支出并更新预算。",
+        "Review the original transaction evidence.",
+        "Confirm whether this transaction was authorized by the owner or business.",
+        "Reclassify the transaction if needed, or record it as a one-off expense and update the budget.",
     ]
     if safe_row.get("recommended_action"):
         recommended_actions.insert(0, str(safe_row["recommended_action"]))

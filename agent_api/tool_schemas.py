@@ -79,9 +79,9 @@ def build_tool_descriptions_text() -> str:
     Build a compact tool description text for Manager Agent prompts.
     """
     lines = [
-        "可用工具列表（均返回摘要，不返回原始数据，不执行真实财务操作）："
+        "Available tools. All tools return summaries, do not return raw data, and do not execute real financial operations:"
     ]
     for schema in AGENT_TOOL_SCHEMAS:
         lines.append(f"- {schema['name']}: {schema['description']}")
-    lines.append("不要默认调用 get_full_context_summary，除非确实需要整体摘要。")
+    lines.append("Do not call get_full_context_summary by default unless a full summary is truly needed.")
     return "\n".join(lines)

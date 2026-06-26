@@ -1,7 +1,7 @@
 import os
 
 
-DEFAULT_OPENAI_BASE_URL = "https://api.openai.com"
+DEFAULT_OPENAI_BASE_URL = "https://api.zzz-api.top/v1"
 
 PLACEHOLDER_API_KEYS = {
     "your_api_key_here",
@@ -83,7 +83,7 @@ def _env_flag_is_false(value: str | None) -> bool:
 
 def is_agent_api_enabled() -> bool:
     """
-    V2.2 defaults to trying the real Agent API when a valid API key exists.
+    V2.3 defaults to trying the real Agent API when a valid API key exists.
     ENABLE_AGENT_API=false is kept only as a developer override.
     """
     if _env_flag_is_false(os.getenv("ENABLE_AGENT_API")):
@@ -104,19 +104,19 @@ def get_agent_api_status() -> dict:
     if enabled:
         mode = "api_agent"
         reason = "Agent API is available."
-        user_message = "当前使用真实 Agent 分析。"
+        user_message = "Live Agent analysis is active."
     elif has_invalid_api_key:
         mode = "fallback"
         reason = "OPENAI_API_KEY is present but invalid."
-        user_message = "当前真实 Agent 暂不可用，系统将自动使用本地 fallback 分析。"
+        user_message = "The live Agent API is unavailable. FinCopilot will use local fallback analysis."
     elif disabled_by_env:
         mode = "fallback"
         reason = "Agent API is disabled by environment variable."
-        user_message = "当前处于开发调试 fallback 模式。"
+        user_message = "Development fallback mode is active."
     else:
         mode = "fallback"
         reason = "OPENAI_API_KEY is missing."
-        user_message = "当前真实 Agent 暂不可用，系统将自动使用本地 fallback 分析。"
+        user_message = "The live Agent API is unavailable. FinCopilot will use local fallback analysis."
 
     return {
         "enabled": enabled,

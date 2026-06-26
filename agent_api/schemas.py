@@ -127,7 +127,7 @@ def get_default_manager_plan(user_query: str = "") -> dict:
         "clarifying_questions": [],
         "response_strategy": "answer_with_fallback",
         "safety_notes": [
-            "不提供投资、税务、法律或债务处置建议。",
+            "No investment, tax, legal, or debt-resolution advice.",
         ],
     }
 
@@ -145,7 +145,7 @@ def get_default_specialist_result(agent_name: str, summary: str = "") -> dict:
         "needs_user_input": False,
         "questions": [],
         "confidence": "medium",
-        "safety_note": "仅用于财务整理和风险提醒，不构成专业建议。",
+        "safety_note": "For financial organization and risk reminders only. Not professional advice.",
     }
 
 
@@ -161,7 +161,7 @@ def get_default_agent_response(user_query: str = "", mode: str = "fallback") -> 
         "final_answer": "",
         "suggested_actions": [],
         "clarifying_questions": [],
-        "safety_note": "仅用于财务整理和风险提醒，不构成专业建议。",
+        "safety_note": "For financial organization and risk reminders only. Not professional advice.",
         "errors": [],
     }
 

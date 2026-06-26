@@ -2,10 +2,10 @@ from ui.navigation import V22_PAGES
 
 
 def test_v22_pages_contains_new_main_entries():
-    assert "Copilot 主界面" in V22_PAGES
-    assert "分析详情" in V22_PAGES
-    assert "行动与报告" in V22_PAGES
-    assert "数据与设置" in V22_PAGES
+    assert "Copilot Home" in V22_PAGES
+    assert "Analysis Details" in V22_PAGES
+    assert "Actions & Reports" in V22_PAGES
+    assert "Data & Settings" in V22_PAGES
 
 
 def test_v22_pages_hides_v21_top_level_entries():
@@ -23,4 +23,4 @@ def test_v22_pages_has_four_entries():
 
 
 def test_v22_default_page_is_copilot_main():
-    assert V22_PAGES[0] == "Copilot 主界面"
+    assert V22_PAGES[0] == "Copilot Home"

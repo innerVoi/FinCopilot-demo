@@ -36,6 +36,7 @@ def patch_streamlit(monkeypatch):
     monkeypatch.setattr(data_settings_page, "render_data_status_card", lambda *args, **kwargs: None)
     monkeypatch.setattr(data_settings_page, "render_quick_upload_panel", lambda *args, **kwargs: None)
     monkeypatch.setattr(data_settings_page, "render_upload_help", lambda *args, **kwargs: None)
+    monkeypatch.setattr(data_settings_page, "render_memory_management_page", lambda *args, **kwargs: None)
 
 
 def test_data_settings_page_imports():
@@ -62,6 +63,11 @@ def test_render_agent_model_tab_callable(monkeypatch):
     data_settings_page.render_agent_model_tab()
 
 
+def test_render_memory_workspace_tab_supports_none(monkeypatch):
+    patch_streamlit(monkeypatch)
+    data_settings_page.render_memory_workspace_tab()
+
+
 def test_render_safety_boundary_tab_callable(monkeypatch):
     patch_streamlit(monkeypatch)
     data_settings_page.render_safety_boundary_tab()
@@ -70,6 +76,10 @@ def test_render_safety_boundary_tab_callable(monkeypatch):
 def test_render_data_settings_page_supports_none(monkeypatch):
     patch_streamlit(monkeypatch)
     data_settings_page.render_data_settings_page()
+
+
+def test_data_settings_page_imports_memory_management_page():
+    assert data_settings_page.render_memory_management_page
 
 
 def test_data_settings_page_does_not_render_agent_api_switch():

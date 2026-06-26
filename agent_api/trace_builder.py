@@ -18,6 +18,8 @@ def build_multi_agent_trace(turn_result: dict) -> dict:
     tool_trace = turn_result.get("tool_trace", {}) or {}
     specialist_outputs = turn_result.get("specialist_outputs", {}) or {}
     safety_result = turn_result.get("safety_result", {}) or {}
+    memory_context = turn_result.get("memory_context", {}) or {}
+    memory_trace = turn_result.get("memory_trace", {}) or {}
     specialist_errors = []
     api_agent_count = 0
     fallback_count = 0
@@ -53,6 +55,12 @@ def build_multi_agent_trace(turn_result: dict) -> dict:
             "safe": safety_result.get("safe", True),
             "risks": safety_result.get("risks", []),
         },
+        "memory": {
+            "memory_augmented": bool(turn_result.get("memory_augmented") or memory_context.get("memory_count")),
+            "memory_count": memory_context.get("memory_count", 0),
+            "used_memory_ids": turn_result.get("used_memory_ids", []) or memory_context.get("used_memory_ids", []),
+            "retrieval_scope": memory_trace.get("retrieval_scope", "current_user_current_workspace_only"),
+        },
     }
 
 
@@ -65,6 +73,7 @@ def trace_to_markdown(trace: dict | None) -> str:
     tools = trace.get("tools", {})
     specialists = trace.get("specialists", {})
     safety = trace.get("safety", {})
+    memory = trace.get("memory", {})
     return (
         f"# Multi-Agent Trace\n\n"
         f"- Trace ID: {trace.get('trace_id', '')}\n"
@@ -87,5 +96,10 @@ def trace_to_markdown(trace: dict | None) -> str:
         f"- Errors: {specialists.get('errors', [])}\n\n"
         "## Safety\n"
         f"- Safe: {safety.get('safe', True)}\n"
-        f"- Risks: {safety.get('risks', [])}\n"
+        f"- Risks: {safety.get('risks', [])}\n\n"
+        "## Memory\n"
+        f"- Memory Augmented: {memory.get('memory_augmented', False)}\n"
+        f"- Memory Count: {memory.get('memory_count', 0)}\n"
+        f"- Used Memory IDs: {memory.get('used_memory_ids', [])}\n"
+        f"- Retrieval Scope: {memory.get('retrieval_scope', 'current_user_current_workspace_only')}\n"
     )

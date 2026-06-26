@@ -25,10 +25,10 @@ def _row_to_record(row) -> dict:
 
 def _deadline_for_priority(priority: str) -> str:
     if priority == "high":
-        return "3 天内"
+        return "within 3 days"
     if priority == "medium":
-        return "7 天内"
-    return "本月内"
+        return "within 7 days"
+    return "this month"
 
 
 def _with_sequential_ids(action_items: list[dict]) -> list[dict]:
@@ -57,17 +57,17 @@ def generate_cashflow_actions(cashflow_result=None, enriched_context=None) -> li
         return [
             make_action_item(
                 action_id=generate_action_id(1),
-                title="优先核查未来 30 天现金流缺口",
-                description="系统估算未来 30 天预计余额可能为负或现金缓冲不足。",
+                title="Prioritize the 30-day cash-flow gap",
+                description="The system estimates that the 30-day projected balance may be negative or the cash buffer may be insufficient.",
                 source="cashflow",
                 priority="high",
-                reason="未来 30 天现金流风险较高，需要优先确认余额、回款和必要支出。",
-                suggested_deadline="今天",
+                reason="Cash-flow risk is high for the next 30 days. Confirm balances, expected collections, and necessary payments first.",
+                suggested_deadline="today",
                 recommended_steps=[
-                    "确认当前企业账户真实可用余额。",
-                    "确认未来 30 天确定客户回款。",
-                    "核查未来 30 天必须支付的大额款项。",
-                    "优先处理逾期发票和固定支出。",
+                    "Confirm the real available balance in business accounts.",
+                    "Confirm customer collections expected in the next 30 days.",
+                    "Review large required payments due in the next 30 days.",
+                    "Prioritize overdue invoices and fixed expenses.",
                 ],
                 related_record={
                     "risk_level": raw_risk,
@@ -82,17 +82,17 @@ def generate_cashflow_actions(cashflow_result=None, enriched_context=None) -> li
     return [
         make_action_item(
             action_id=generate_action_id(1),
-            title="复查未来 30 天现金流压力",
-            description="系统识别到中等现金流压力，建议尽快复查未来回款和待付款。",
+            title="Review 30-day cash-flow pressure",
+            description="The system identified moderate cash-flow pressure. Review expected collections and payables soon.",
             source="cashflow",
             priority="medium",
-            reason="现金流风险为 medium，未来发票和固定支出可能影响短期余额。",
-            suggested_deadline="3 天内",
+            reason="Cash-flow risk is medium. Upcoming invoices and fixed expenses may affect short-term balances.",
+            suggested_deadline="within 3 days",
             recommended_steps=[
-                "复核未来 30 天客户回款是否确定。",
-                "确认未来 30 天待付发票金额。",
-                "检查是否有未上传固定支出。",
-                "在行动清单中优先处理金额较大的现金流相关任务。",
+                "Review whether customer collections in the next 30 days are confirmed.",
+                "Confirm invoice amounts due in the next 30 days.",
+                "Check whether any fixed expenses were not uploaded.",
+                "Prioritize larger cash-flow-related tasks in the action list.",
             ],
             related_record={
                 "risk_level": raw_risk,
@@ -119,17 +119,17 @@ def generate_invoice_actions(invoice_result=None) -> list[dict]:
         actions.append(
             make_action_item(
                 action_id=generate_action_id(len(actions) + 1),
-                title="处理逾期发票",
-                description="当前存在逾期发票，需要确认付款状态和后续处理安排。",
+                title="Handle overdue invoices",
+                description="Overdue invoices exist. Confirm payment status and next handling steps.",
                 source="invoice",
                 priority="high",
-                reason=f"逾期发票金额为 {overdue_amount:.2f}。",
-                suggested_deadline="今天",
+                reason=f"Overdue invoice amount is {overdue_amount:.2f}.",
+                suggested_deadline="today",
                 recommended_steps=[
-                    "查看逾期发票列表。",
-                    "确认是否已经支付但未更新状态。",
-                    "如果尚未支付，安排付款计划或记录需要跟进。",
-                    "更新发票状态。",
+                    "Review the overdue invoice list.",
+                    "Confirm whether payment has already been made but the status was not updated.",
+                    "If unpaid, arrange a payment plan or record the required follow-up.",
+                    "Update invoice status.",
                 ],
                 related_record={"overdue_invoice_amount": overdue_amount},
             )
@@ -139,16 +139,16 @@ def generate_invoice_actions(invoice_result=None) -> list[dict]:
         actions.append(
             make_action_item(
                 action_id=generate_action_id(len(actions) + 1),
-                title="确认未来 7 天到期发票",
-                description="未来 7 天存在即将到期发票，需要提前确认付款安排。",
+                title="Confirm invoices due in the next 7 days",
+                description="Invoices are due within the next 7 days. Confirm payment arrangements in advance.",
                 source="invoice",
                 priority="medium",
-                reason=f"未来 7 天到期发票金额为 {due_7d_amount:.2f}。",
-                suggested_deadline="3 天内",
+                reason=f"Invoice amount due in the next 7 days is {due_7d_amount:.2f}.",
+                suggested_deadline="within 3 days",
                 recommended_steps=[
-                    "查看未来 7 天到期发票。",
-                    "确认发票是否准确且仍需支付。",
-                    "将必要付款纳入短期现金流安排。",
+                    "Review invoices due in the next 7 days.",
+                    "Confirm whether the invoices are accurate and still payable.",
+                    "Include required payments in the short-term cash-flow plan.",
                 ],
                 related_record={"due_7d_amount": due_7d_amount},
             )
@@ -158,16 +158,16 @@ def generate_invoice_actions(invoice_result=None) -> list[dict]:
         actions.append(
             make_action_item(
                 action_id=generate_action_id(len(actions) + 1),
-                title="规划未来 30 天发票付款安排",
-                description="未来 30 天待付发票金额较高，需要提前组织付款节奏。",
+                title="Plan invoice payments for the next 30 days",
+                description="Invoice payments due in the next 30 days are high. Plan the payment cadence in advance.",
                 source="invoice",
                 priority="medium",
-                reason=f"未来 30 天到期发票金额为 {due_30d_amount:.2f}。",
-                suggested_deadline="7 天内",
+                reason=f"Invoice amount due in the next 30 days is {due_30d_amount:.2f}.",
+                suggested_deadline="within 7 days",
                 recommended_steps=[
-                    "查看未来 30 天到期发票清单。",
-                    "按到期日和金额排序。",
-                    "与现金流视图一起确认付款优先级。",
+                    "Review the list of invoices due in the next 30 days.",
+                    "Sort by due date and amount.",
+                    "Confirm payment priority alongside the cash-flow view.",
                 ],
                 related_record={"due_30d_amount": due_30d_amount},
             )
@@ -196,22 +196,22 @@ def generate_rule_anomaly_actions(rule_anomalies_df=None, max_items=5) -> list[d
     actions = []
     for _, row in risky_df.head(max_items).iterrows():
         priority = normalize_priority(row.get("risk_level"))
-        merchant = row.get("merchant", "未知商户")
-        anomaly_type = row.get("anomaly_type", "规则")
+        merchant = row.get("merchant", "Unknown merchant")
+        anomaly_type = row.get("anomaly_type", "rule")
         actions.append(
             make_action_item(
                 action_id=generate_action_id(len(actions) + 1),
-                title=f"核查 {merchant} 的 {anomaly_type} 异常",
-                description="该交易被规则/统计分支识别为需要核查的异常记录。",
+                title=f"Review {anomaly_type} anomaly for {merchant}",
+                description="This transaction was flagged by the rule/statistical branch as a record that needs review.",
                 source="rule_anomaly",
                 priority=priority,
-                reason=str(row.get("reason", "该交易命中了规则/统计异常条件。")),
+                reason=str(row.get("reason", "This transaction matched rule/statistical anomaly conditions.")),
                 suggested_deadline=_deadline_for_priority(priority),
                 recommended_steps=[
-                    "核查原始交易凭证。",
-                    "确认该交易是否为授权支出。",
-                    "判断是否需要重新分类。",
-                    "如无法解释，标记为需要跟进。",
+                    "Review the original transaction evidence.",
+                    "Confirm whether the transaction was authorized.",
+                    "Decide whether it needs to be reclassified.",
+                    "If it cannot be explained, mark it for follow-up.",
                 ],
                 related_record=_row_to_record(row),
             )
@@ -243,21 +243,21 @@ def generate_model_anomaly_actions(lof_result_df=None, max_items=5) -> list[dict
     actions = []
     for _, row in risky_df.head(max_items).iterrows():
         priority = normalize_priority(row.get("risk_level"))
-        merchant = row.get("merchant", "未知商户")
+        merchant = row.get("merchant", "Unknown merchant")
         actions.append(
             make_action_item(
                 action_id=generate_action_id(len(actions) + 1),
-                title=f"核查模型高风险交易：{merchant}",
-                description="该交易被 LOF 模型识别为偏离局部交易模式的记录。",
+                title=f"Review high-risk model transaction: {merchant}",
+                description="This transaction was identified by the LOF model as deviating from local transaction patterns.",
                 source="model_anomaly",
                 priority=priority,
-                reason=str(row.get("model_evidence", "模型分数显示该交易偏离常见模式。")),
+                reason=str(row.get("model_evidence", "The model score indicates this transaction deviates from common patterns.")),
                 suggested_deadline=_deadline_for_priority(priority),
                 recommended_steps=[
-                    "查看模型证据。",
-                    "核查商户和金额是否符合业务背景。",
-                    "判断是否为正常业务支出、一次性支出或需要跟进的异常。",
-                    "在后续进展跟踪中更新处理状态。",
+                    "Review the model evidence.",
+                    "Check whether the merchant and amount fit the business context.",
+                    "Decide whether it is normal business spending, a one-off expense, or an anomaly needing follow-up.",
+                    "Update handling status in the follow-up tracker.",
                 ],
                 related_record=_row_to_record(row),
             )
@@ -285,21 +285,21 @@ def generate_goal_actions(goal_result=None, max_items=5) -> list[dict]:
     actions = []
     for _, row in risky_df.head(max_items).iterrows():
         priority = normalize_priority(row.get("goal_risk_level"))
-        goal_name = row.get("goal_name", "未命名目标")
+        goal_name = row.get("goal_name", "Unnamed goal")
         actions.append(
             make_action_item(
                 action_id=generate_action_id(len(actions) + 1),
-                title=f"复查财务目标：{goal_name}",
-                description="该财务目标存在进度或现金流压力，需要确认优先级和可执行路径。",
+                title=f"Review financial goal: {goal_name}",
+                description="This financial goal has progress or cash-flow pressure. Confirm priority and an executable path.",
                 source="goal",
                 priority=priority,
-                reason=str(row.get("goal_recommendation", "该目标存在达成风险。")),
+                reason=str(row.get("goal_recommendation", "This goal has completion risk.")),
                 suggested_deadline=_deadline_for_priority(priority),
                 recommended_steps=[
-                    "查看目标剩余缺口。",
-                    "确认目标优先级。",
-                    "评估当前净现金流是否支持目标。",
-                    "必要时调整目标期限或每月储备节奏。",
+                    "Review the remaining gap for the goal.",
+                    "Confirm goal priority.",
+                    "Assess whether current net cash flow can support the goal.",
+                    "Adjust the target date or monthly reserve pace if needed.",
                 ],
                 related_record=_row_to_record(row),
             )
@@ -321,16 +321,16 @@ def generate_clarification_actions(clarification_status=None) -> list[dict]:
         for question in unanswered_questions
         if question.get("question")
     ]
-    steps.append("保存补充信息并重新运行 Agent Workspace。")
+    steps.append("Save the additional information and rerun Agent Workspace.")
     return [
         make_action_item(
             action_id=generate_action_id(1),
-            title="补充关键业务信息",
-            description="当前任务仍有未回答的澄清问题，补充后可提高分析和行动清单质量。",
+            title="Add key business information",
+            description="This task still has unanswered clarification questions. Adding the information can improve the analysis and action list.",
             source="clarification",
             priority="medium",
-            reason="部分业务上下文尚未填写，当前结论仍可能依赖上传数据估算。",
-            suggested_deadline="下次复查前",
+            reason="Some business context is still missing, so current conclusions may rely on estimates from the uploaded data.",
+            suggested_deadline="before the next review",
             recommended_steps=steps,
             related_record={"missing_fields": status.get("missing_fields", [])},
         )

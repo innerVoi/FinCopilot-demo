@@ -14,11 +14,11 @@ def test_get_agent_model_returns_string(monkeypatch):
     assert get_agent_model() == "gpt-5.4-mini"
 
 
-def test_get_openai_base_url_defaults_to_openai_endpoint(monkeypatch):
+def test_get_openai_base_url_defaults_to_compatible_provider(monkeypatch):
     monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     monkeypatch.delenv("OPENAI_API_BASE", raising=False)
     monkeypatch.delenv("OPENAI_API_URL", raising=False)
-    assert get_openai_base_url() == "https://api.openai.com"
+    assert get_openai_base_url() == "https://api.zzz-api.top/v1"
 
 
 def test_get_agent_api_status_shape(monkeypatch):

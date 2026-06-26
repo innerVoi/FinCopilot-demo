@@ -1,39 +1,42 @@
-SAFETY_NOTE = "本结果仅用于财务整理、风险提醒和教育性支持，不构成投资、税务、法律、债务处置或专业财务建议。"
+SAFETY_NOTE = (
+    "This result is for financial organization, risk reminders, and educational support only. "
+    "It is not investment, tax, legal, debt-resolution, or professional financial advice."
+)
 
 HEADLINE_BY_INTENT = {
-    "cashflow_check": "现金流安全性分析已完成",
-    "expense_anomaly_review": "异常支出核查建议已生成",
-    "goal_or_budget_planning": "预算与目标行动建议已生成",
-    "promotion_or_purchase_planning": "经营计划风险分析已完成",
-    "invoice_or_payment_review": "发票与付款优先级分析已完成",
-    "general_finance_summary": "财务概览总结已生成",
-    "unknown": "FinCopilot 已完成本轮分析",
+    "cashflow_check": "Cash-flow safety analysis is complete",
+    "expense_anomaly_review": "Suspicious-expense review is complete",
+    "goal_or_budget_planning": "Budget and goal action plan is ready",
+    "promotion_or_purchase_planning": "Business planning risk analysis is complete",
+    "invoice_or_payment_review": "Invoice and payment priority review is complete",
+    "general_finance_summary": "Financial overview is ready",
+    "unknown": "FinCopilot has completed this analysis",
 }
 
 INTENT_TO_DETAIL_SECTIONS = {
     "cashflow_check": [
-        {"label": "现金流详情", "target_page": "分析详情", "section": "发票与现金流", "description": "查看现金流指标、发票压力和工具摘要。"},
-        {"label": "行动项", "target_page": "行动与报告", "section": "行动项", "description": "查看本轮建议行动和处理状态。"},
+        {"label": "Cash-flow Details", "target_page": "Analysis Details", "section": "Invoices & Cash Flow", "description": "View cash-flow metrics, invoice pressure, and tool summaries."},
+        {"label": "Action Items", "target_page": "Actions & Reports", "section": "Action Items", "description": "Review suggested actions and handling status."},
     ],
     "expense_anomaly_review": [
-        {"label": "异常支出详情", "target_page": "分析详情", "section": "异常支出", "description": "查看规则异常和模型异常结果。"},
-        {"label": "行动项", "target_page": "行动与报告", "section": "行动项", "description": "查看异常核查行动项。"},
+        {"label": "Suspicious Expense Details", "target_page": "Analysis Details", "section": "Suspicious Expenses", "description": "View rule-based and model-based anomaly results."},
+        {"label": "Action Items", "target_page": "Actions & Reports", "section": "Action Items", "description": "Review anomaly-check action items."},
     ],
     "goal_or_budget_planning": [
-        {"label": "财务目标详情", "target_page": "分析详情", "section": "财务目标", "description": "查看目标进度和预算影响。"},
-        {"label": "报告", "target_page": "行动与报告", "section": "报告", "description": "查看本轮 Multi-Agent 报告。"},
+        {"label": "Goal Details", "target_page": "Analysis Details", "section": "Goals", "description": "View goal progress and budget impact."},
+        {"label": "Reports", "target_page": "Actions & Reports", "section": "Reports", "description": "View this Multi-Agent report."},
     ],
     "promotion_or_purchase_planning": [
-        {"label": "经营计划详情", "target_page": "分析详情", "section": "财务目标", "description": "查看现金流、预算和目标影响。"},
-        {"label": "报告", "target_page": "行动与报告", "section": "报告", "description": "查看本轮 Multi-Agent 报告。"},
+        {"label": "Business Planning Details", "target_page": "Analysis Details", "section": "Goals", "description": "View cash-flow, budget, and goal impact."},
+        {"label": "Reports", "target_page": "Actions & Reports", "section": "Reports", "description": "View this Multi-Agent report."},
     ],
     "invoice_or_payment_review": [
-        {"label": "发票与付款详情", "target_page": "分析详情", "section": "发票与现金流", "description": "查看发票状态和付款压力。"},
-        {"label": "行动项", "target_page": "行动与报告", "section": "行动项", "description": "查看付款优先级行动项。"},
+        {"label": "Invoice and Payment Details", "target_page": "Analysis Details", "section": "Invoices & Cash Flow", "description": "Review invoice status and payment pressure."},
+        {"label": "Action Items", "target_page": "Actions & Reports", "section": "Action Items", "description": "Review payment-priority action items."},
     ],
     "general_finance_summary": [
-        {"label": "完整分析详情", "target_page": "分析详情", "section": "预算与分类", "description": "查看预算、现金流、异常和目标详情。"},
-        {"label": "完整报告", "target_page": "行动与报告", "section": "报告", "description": "查看本轮 Multi-Agent 报告。"},
+        {"label": "Full Analysis Details", "target_page": "Analysis Details", "section": "Budget & Categories", "description": "View budget, cash-flow, anomaly, and goal details."},
+        {"label": "Full Report", "target_page": "Actions & Reports", "section": "Reports", "description": "View this Multi-Agent report."},
     ],
 }
 
@@ -108,6 +111,19 @@ def _clip_text(text: str, max_length: int = 220) -> str:
     return value[: max_length - 1].rstrip() + "..."
 
 
+def _extract_report_summary(report_markdown: str, max_length: int = 900) -> str:
+    """
+    Extract a readable report summary without using it as a title.
+    """
+    lines = [
+        line.strip()
+        for line in str(report_markdown or "").splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    ]
+    summary = "\n\n".join(lines[:4])
+    return _clip_text(summary, max_length=max_length) if summary else "This report has been generated. Expand it to view the full content."
+
+
 def build_headline(turn_result: dict | None) -> str:
     """
     Build a short headline from intent and specialist summaries.
@@ -132,7 +148,7 @@ def build_summary(turn_result: dict | None) -> str:
     specialist_summary = _first_specialist_summary(turn_result)
     if specialist_summary:
         return _clip_text(specialist_summary, max_length=260)
-    return "FinCopilot 已完成本轮分析。你可以查看下方指标、风险、行动项和补充问题。"
+    return "FinCopilot has completed this analysis. Review the metrics, risks, action items, and follow-up questions below."
 
 
 def build_status_badge(turn_result: dict | None) -> dict:
@@ -142,7 +158,7 @@ def build_status_badge(turn_result: dict | None) -> dict:
     turn_result = turn_result or {}
     value = safe_get(turn_result, "mode", "fallback")
     return {
-        "label": "Agent 模式",
+        "label": "Agent Mode",
         "value": value,
         "type": infer_status_type(value),
     }
@@ -157,20 +173,20 @@ def build_metric_cards(turn_result: dict | None) -> list[dict]:
     tool_results = ensure_list(safe_get(turn_result, "tool_results", []))
     specialist_outputs = safe_get(turn_result, "specialist_outputs", {}) or {}
     return [
-        {"label": "任务类型", "value": safe_get(manager_plan, "intent", "unknown"), "help": "Manager Agent 识别出的任务类型。"},
-        {"label": "Agent 模式", "value": safe_get(turn_result, "mode", "fallback"), "help": "本轮是真实 Agent、fallback 或 mixed。"},
-        {"label": "调用工具数", "value": len(tool_results), "help": "Manager Plan 触发的工具摘要数量。"},
-        {"label": "专业 Agent 数", "value": len(specialist_outputs), "help": "本轮参与分析的 Specialist Agents 数量。"},
-        {"label": "建议行动", "value": len(ensure_list(safe_get(turn_result, "suggested_actions", []))), "help": "本轮生成的建议行动数量。"},
-        {"label": "需补充信息", "value": len(ensure_list(safe_get(turn_result, "clarifying_questions", []))), "help": "为了提高判断准确性建议补充的信息数量。"},
+        {"label": "Task Type", "value": safe_get(manager_plan, "intent", "unknown"), "help": "Task type identified by the Manager Agent."},
+        {"label": "Agent Mode", "value": safe_get(turn_result, "mode", "fallback"), "help": "Whether this turn used live Agent, fallback, or mixed mode."},
+        {"label": "Tools Used", "value": len(tool_results), "help": "Number of tool summaries triggered by the Manager Plan."},
+        {"label": "Specialists", "value": len(specialist_outputs), "help": "Number of Specialist Agents involved in this turn."},
+        {"label": "Suggested Actions", "value": len(ensure_list(safe_get(turn_result, "suggested_actions", []))), "help": "Number of suggested actions generated this turn."},
+        {"label": "Info Needed", "value": len(ensure_list(safe_get(turn_result, "clarifying_questions", []))), "help": "Additional information that would improve analysis quality."},
     ]
 
 
 def _infer_risk_severity(text: str) -> str:
-    value = str(text or "")
-    if any(keyword in value for keyword in ["高风险", "缺口", "逾期", "不足", "异常"]):
+    value = str(text or "").lower()
+    if any(keyword in value for keyword in ["high risk", "gap", "overdue", "insufficient", "anomaly"]):
         return "high"
-    if any(keyword in value for keyword in ["可能", "需要确认", "不完整"]):
+    if any(keyword in value for keyword in ["may", "needs confirmation", "incomplete"]):
         return "medium"
     return "low"
 
@@ -188,7 +204,7 @@ def build_risk_cards(turn_result: dict | None) -> list[dict]:
             severity = _infer_risk_severity(description)
             cards.append(
                 {
-                    "title": "风险提醒",
+                    "title": "Risk Alert",
                     "description": description,
                     "severity": severity,
                     "type": infer_status_type(severity),
@@ -214,7 +230,7 @@ def build_action_cards(turn_result: dict | None) -> list[dict]:
                     "title": safe_get(item, "title", ""),
                     "priority": safe_get(item, "priority", "medium"),
                     "description": safe_get(item, "description", safe_get(item, "reason", "")),
-                    "deadline": safe_get(item, "suggested_deadline", "3 天内"),
+                    "deadline": safe_get(item, "suggested_deadline", "within 3 days"),
                     "status": safe_get(item, "status", "pending"),
                 }
             )
@@ -228,8 +244,8 @@ def build_action_cards(turn_result: dict | None) -> list[dict]:
                 {
                     "title": title,
                     "priority": "medium",
-                    "description": "该行动来自本轮 Multi-Agent 分析建议。",
-                    "deadline": "3 天内",
+                    "description": "This action comes from the current Multi-Agent analysis.",
+                    "deadline": "within 3 days",
                     "status": "pending",
                 }
             )
@@ -243,7 +259,7 @@ def build_clarification_cards(turn_result: dict | None) -> list[dict]:
     return [
         {
             "question": str(question or ""),
-            "why_needed": "补充该信息可以让后续分析更准确。",
+            "why_needed": "Providing this information will make follow-up analysis more accurate.",
         }
         for question in ensure_list(safe_get(turn_result or {}, "clarifying_questions", []))
         if str(question or "").strip()
@@ -256,10 +272,10 @@ def build_detail_sections(turn_result: dict | None) -> list[dict]:
     """
     intent = safe_get(_get_manager_plan(turn_result), "intent", "unknown")
     inline_section = {
-        "label": "在当前页面展开详细预览",
-        "target_page": "Copilot 主界面",
-        "section": "详细结果预览",
-        "description": "无需离开当前页面，可查看现金流、异常、行动项和报告预览。",
+        "label": "Expand the detailed preview on this page",
+        "target_page": "Copilot Home",
+        "section": "Detailed Result Preview",
+        "description": "View cash flow, anomalies, action items, and report previews without leaving this page.",
     }
     return [inline_section] + list(
         INTENT_TO_DETAIL_SECTIONS.get(intent, INTENT_TO_DETAIL_SECTIONS["general_finance_summary"])
@@ -273,9 +289,45 @@ def build_report_card(turn_result: dict | None) -> dict:
     report_markdown = str(safe_get(turn_result or {}, "report_markdown", "") or "")
     return {
         "available": bool(report_markdown.strip()),
-        "title": "Multi-Agent 对话报告",
-        "download_label": "下载本轮报告",
+        "title": "Multi-Agent Conversation Report",
+        "summary": _extract_report_summary(report_markdown) if report_markdown.strip() else "",
+        "download_label": "Download this report",
     }
+
+
+def build_memory_cards(turn_result: dict | None) -> list[dict]:
+    """
+    Build memory cards from turn_result["memory_context"].
+    """
+    memory_context = safe_get(turn_result or {}, "memory_context", {}) or {}
+    memory_count = int(safe_get(memory_context, "memory_count", 0) or 0)
+    if not memory_count:
+        return [
+            {
+                "title": "No Business Memory Yet",
+                "description": "This analysis is mainly based on the currently uploaded data.",
+                "items": [],
+            }
+        ]
+    items = []
+    for key in [
+        "known_normal_payments",
+        "known_suppliers",
+        "cash_context",
+        "expected_receivables",
+        "recurring_expenses",
+        "business_rules",
+        "user_preferences",
+        "known_risks",
+    ]:
+        items.extend(str(item) for item in ensure_list(memory_context.get(key)) if str(item).strip())
+    return [
+        {
+            "title": "Business Memory Used",
+            "description": f"This analysis used {memory_count} user-confirmed business facts.",
+            "items": items[:6],
+        }
+    ]
 
 
 def build_answer_presentation(turn_result: dict | None) -> dict:
@@ -287,6 +339,7 @@ def build_answer_presentation(turn_result: dict | None) -> dict:
         "summary": build_summary(turn_result),
         "status_badge": build_status_badge(turn_result),
         "metric_cards": build_metric_cards(turn_result),
+        "memory_cards": build_memory_cards(turn_result),
         "risk_cards": build_risk_cards(turn_result),
         "action_cards": build_action_cards(turn_result),
         "clarification_cards": build_clarification_cards(turn_result),

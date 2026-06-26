@@ -7,13 +7,13 @@ def sanitize_openai_error(error: Exception) -> str:
     """
     text = str(error)
     if "Incorrect API key provided" in text or "401" in text:
-        return "OpenAI API Key 无效或已被拒绝；请检查 OPENAI_API_KEY 是否正确、未过期，并在修改后重启 Streamlit 服务。"
+        return "The OpenAI API key is invalid or rejected. Check OPENAI_API_KEY, confirm it has not expired, and restart Streamlit after changes."
     if "model" in text.lower() and ("not found" in text.lower() or "does not exist" in text.lower() or "404" in text):
-        return "当前配置的 OpenAI 模型不可用；请检查 OPENAI_AGENT_MODEL / OPENAI_MODEL 是否为当前账号可用的模型，并重启 Streamlit 服务。"
+        return "The configured OpenAI model is unavailable. Check whether OPENAI_AGENT_MODEL / OPENAI_MODEL is available to this account, then restart Streamlit."
     if "permission" in text.lower() or "access" in text.lower() or "403" in text:
-        return "当前 API Key 没有访问所选模型的权限；请更换可用模型或检查账号权限。"
+        return "The current API key does not have access to the selected model. Use an available model or check account permissions."
     if "rate limit" in text.lower() or "429" in text:
-        return "OpenAI API 当前触发限流；请稍后重试或检查账号额度。"
+        return "The OpenAI API is currently rate-limited. Try again later or check account quota."
     return text
 
 
@@ -139,21 +139,21 @@ def check_client_available() -> dict:
     if not status["has_api_key"]:
         return {
             "available": False,
-            "reason": "未检测到 OPENAI_API_KEY。",
+            "reason": "OPENAI_API_KEY was not detected.",
         }
     try:
         client = get_openai_client()
     except Exception as error:
         return {
             "available": False,
-            "reason": f"OpenAI client 构造失败：{sanitize_openai_error(error)}",
+            "reason": f"Failed to construct OpenAI client: {sanitize_openai_error(error)}",
         }
     if client is None:
         return {
             "available": False,
-            "reason": "OpenAI SDK 不可用或 API Key 缺失。",
+            "reason": "OpenAI SDK is unavailable or the API key is missing.",
         }
     return {
         "available": True,
-        "reason": f"OpenAI client 可构造；base_url={get_openai_base_url()}；未发送真实 API 请求。",
+        "reason": f"OpenAI client can be constructed; base_url={get_openai_base_url()}; no real API request was sent.",
     }

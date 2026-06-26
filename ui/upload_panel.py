@@ -63,23 +63,23 @@ def render_data_status_card(
     agent_api_status = agent_api_status or {}
     col1, col2, col3, col4 = st.columns(4)
     col1.metric(
-        "交易流水",
-        "已加载" if summary["has_transactions"] else "未上传",
-        f"{summary['transactions_count']} 条",
+        "Transactions",
+        "Loaded" if summary["has_transactions"] else "Not uploaded",
+        f"{summary['transactions_count']} rows",
     )
     col2.metric(
-        "发票数据",
-        "已加载" if summary["has_invoices"] else "未上传",
-        f"{summary['invoices_count']} 条",
+        "Invoices",
+        "Loaded" if summary["has_invoices"] else "Not uploaded",
+        f"{summary['invoices_count']} rows",
     )
     col3.metric(
-        "财务目标",
-        "已加载" if summary["has_goals"] else "未上传",
-        f"{summary['goals_count']} 条",
+        "Goals",
+        "Loaded" if summary["has_goals"] else "Not uploaded",
+        f"{summary['goals_count']} rows",
     )
     col4.metric(
-        "Agent 状态",
-        "真实 Agent" if agent_api_status.get("mode") == "api_agent" else "fallback",
+        "Agent Status",
+        "Live Agent" if agent_api_status.get("mode") == "api_agent" else "fallback",
         agent_api_status.get("model", ""),
     )
     return summary
@@ -89,29 +89,29 @@ def render_quick_upload_panel():
     """
     Render quick upload controls for the Copilot main page.
     """
-    with st.expander("先给 FinCopilot 一些数据", expanded=False):
-        st.caption("你可以上传交易流水、发票和财务目标；也可以直接使用默认样例数据体验完整流程。")
+    with st.expander("Give FinCopilot Some Data First", expanded=False):
+        st.caption("Upload transactions, invoices, and goals, or use sample data to try the full workflow.")
         use_sample_data = st.checkbox(
-            "未上传时使用默认样例数据",
+            "Use sample data when files are not uploaded",
             value=True,
             key="v22_use_sample_data",
         )
         transactions_file = st.file_uploader(
-            "上传交易流水 CSV",
+            "Upload transactions CSV",
             type=["csv"],
             key="v22_transactions_file",
         )
         invoices_file = st.file_uploader(
-            "上传发票 CSV",
+            "Upload invoices CSV",
             type=["csv"],
             key="v22_invoices_file",
         )
         goals_file = st.file_uploader(
-            "上传财务目标 CSV",
+            "Upload goals CSV",
             type=["csv"],
             key="v22_goals_file",
         )
-        st.caption("未上传时会使用内置 sample data，方便快速演示。")
+        st.caption("When files are not uploaded, built-in sample data is used for a quick demo.")
     return {
         "transactions_file": transactions_file,
         "invoices_file": invoices_file,
@@ -125,6 +125,7 @@ def render_upload_help():
     Render brief upload guidance.
     """
     st.caption(
-        "上传交易、发票和目标 CSV 后，你可以直接问：未来 30 天现金流安全吗？"
-        "哪些支出最可疑？我该优先处理哪些发票或行动项？"
+        "After uploading transactions, invoices, and goals CSV files, you can ask: "
+        "Is cash flow safe for the next 30 days? Which expenses are most suspicious? "
+        "Which invoices or action items should I prioritize?"
     )

@@ -97,7 +97,7 @@ def build_specialist_agent_messages(
     return [
         {
             "role": "system",
-            "content": f"{get_agent_prompt(agent_name)}\n\n你必须只输出 JSON，不要输出 Markdown。",
+            "content": f"{get_agent_prompt(agent_name)}\n\nYou must output JSON only. Do not output Markdown.",
         },
         {"role": "user", "content": user_prompt},
     ]
@@ -146,7 +146,7 @@ def call_specialist_agent_api(
 
     client = get_openai_client()
     if client is None:
-        return _fallback_specialist_result(agent_name, user_query, ["OpenAI client 不可用。"])
+        return _fallback_specialist_result(agent_name, user_query, ["OpenAI client is unavailable."])
 
     try:
         raw_output = create_chat_completion_text(
@@ -164,12 +164,12 @@ def call_specialist_agent_api(
         return _fallback_specialist_result(
             agent_name,
             user_query,
-            [f"Specialist Agent API 调用失败：{sanitize_openai_error(error)}"],
+            [f"Specialist Agent API call failed: {sanitize_openai_error(error)}"],
         )
 
     parsed = extract_specialist_json_from_text(raw_output)
     if parsed is None:
-        return _fallback_specialist_result(agent_name, user_query, ["Specialist Agent 输出不是合法 JSON。"], raw_output)
+        return _fallback_specialist_result(agent_name, user_query, ["Specialist Agent output is not valid JSON."], raw_output)
 
     result = validate_specialist_result(parsed, agent_name=agent_name)
     safety_result = validate_specialist_result_safety(result)

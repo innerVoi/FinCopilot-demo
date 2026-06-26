@@ -28,10 +28,16 @@ class DummyStreamlit:
 
 def patch_streamlit(monkeypatch):
     monkeypatch.setattr(action_report_page, "st", DummyStreamlit())
+    monkeypatch.setattr(action_report_page, "render_action_feedback_list", lambda *args, **kwargs: None)
+    monkeypatch.setattr(action_report_page, "render_action_feedback_history", lambda *args, **kwargs: None)
+    monkeypatch.setattr(action_report_page, "list_pending_action_items", lambda *args, **kwargs: [])
+    monkeypatch.setattr(action_report_page, "list_handled_action_items", lambda *args, **kwargs: [])
 
 
 def test_action_report_page_imports():
     assert action_report_page.render_action_report_page
+    assert action_report_page.render_action_feedback_list
+    assert action_report_page.render_action_feedback_history
 
 
 def test_render_action_items_tab_supports_none(monkeypatch):

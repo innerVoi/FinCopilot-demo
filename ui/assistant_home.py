@@ -43,95 +43,95 @@ def render_assistant_home(
     goal_result = goal_result or {}
     workspace = workspace or {}
 
-    st.title("FinCopilot：小微企业财务行动助手")
-    st.caption("当前版本：FinCopilot V2.1 完整 Demo")
+    st.title("FinCopilot: Finance Action Assistant for Small Businesses")
+    st.caption("Current version: FinCopilot V2.3 Memory-Augmented Agentic CFO Copilot")
     st.caption(
-        "把交易、发票、现金流、异常支出和财务目标串起来，帮你判断钱是否安全、风险在哪里、下一步该做什么。"
+        "Connect transactions, invoices, cash flow, suspicious expenses, and goals to understand whether cash is safe, where risk sits, and what to do next."
     )
 
     entry_col1, entry_col2, entry_col3 = st.columns(3)
-    entry_col1.info("直接提问：进入“和 FinCopilot 对话”")
-    entry_col2.info("查看任务过程：进入“Agent 工作台”")
-    entry_col3.info("跟进行动项：进入“行动中心”")
+    entry_col1.info("Ask directly: open FinCopilot Chat")
+    entry_col2.info("Review task flow: open Agent Workspace")
+    entry_col3.info("Track action items: open Action Center")
 
-    st.subheader("我优先帮你回答三件事")
+    st.subheader("Three Questions FinCopilot Prioritizes")
     col1, col2, col3 = st.columns(3)
-    col1.info("我现在的钱够不够？")
-    col2.warning("哪些支出有问题？")
-    col3.success("接下来该怎么收钱、花钱和控制风险？")
+    col1.info("Do I have enough cash right now?")
+    col2.warning("Which expenses need review?")
+    col3.success("What should I collect, pay, or control next?")
 
-    st.subheader("当前经营状态概览")
+    st.subheader("Current Business Status")
     progress_summary = workspace.get("progress_summary", {})
     action_summary = workspace.get("action_summary", {})
     invoice_summary = invoice_result.get("summary", {})
     goal_summary = goal_result.get("summary", {})
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("现金流风险", cashflow_result.get("risk_level", "unknown"))
+    col1.metric("Cash-Flow Risk", cashflow_result.get("risk_level", "unknown"))
     col2.metric(
-        "未来 30 天预计余额",
+        "Projected 30-Day Balance",
         _format_money(cashflow_result.get("projected_balance_30d", 0)),
     )
-    col3.metric("高优先级行动项", action_summary.get("high", 0))
-    col4.metric("待处理行动项", progress_summary.get("active_count", 0))
+    col3.metric("High-Priority Action Items", action_summary.get("high", 0))
+    col4.metric("Pending Action Items", progress_summary.get("active_count", 0))
 
     col5, col6, col7, col8 = st.columns(4)
-    col5.metric("异常行动项", action_summary.get("by_source", {}).get("rule_anomaly", 0))
+    col5.metric("Anomaly Action Items", action_summary.get("by_source", {}).get("rule_anomaly", 0))
     col6.metric(
-        "逾期发票金额",
+        "Overdue Invoice Amount",
         _format_money(invoice_summary.get("overdue_invoice_amount", 0)),
     )
     col7.metric(
-        "目标完成率",
+        "Goal Progress",
         _format_percent(goal_summary.get("overall_progress_percent", 0)),
     )
-    col8.metric("完成率", f"{progress_summary.get('completion_rate', 0.0) * 100:.0f}%")
+    col8.metric("Completion Rate", f"{progress_summary.get('completion_rate', 0.0) * 100:.0f}%")
 
-    st.subheader("你可以这样问我")
+    st.subheader("Questions to Try")
     example_questions = [
-        "未来 30 天现金流安全吗？",
-        "这个月哪些支出最可疑？",
-        "有哪些发票或付款要优先处理？",
-        "我能不能花 5000 做促销？",
-        "我应该先收钱、付款还是控费？",
-        "帮我生成本周财务行动清单。",
+        "Is cash flow safe for the next 30 days?",
+        "Which expenses look most suspicious this month?",
+        "Which invoices or payments should be prioritized?",
+        "Can I spend 5,000 on a promotion?",
+        "Should I collect cash, pay invoices, or cut costs first?",
+        "Generate this week's finance action plan.",
     ]
     for question in example_questions:
         if st.button(question, key=f"example_{question}"):
             st.session_state["pending_chat_query"] = question
-            st.info("问题已记录，可进入“和 FinCopilot 对话”页面继续。")
+            st.info("Question saved. Open FinCopilot Chat to continue.")
 
-    st.subheader("最近一次 Agent 对话")
+    st.subheader("Latest Agent Conversation")
     if latest_agent_turn:
         col1, col2, col3, col4 = st.columns(4)
         manager_plan = latest_agent_turn.get("manager_plan", {})
-        col1.metric("任务类型", manager_plan.get("intent", "unknown"))
-        col2.metric("Agent 模式", latest_agent_turn.get("mode", "fallback"))
-        col3.metric("建议行动", len(latest_agent_turn.get("suggested_actions", [])))
-        col4.metric("需补充信息", len(latest_agent_turn.get("clarifying_questions", [])))
+        col1.metric("Task Type", manager_plan.get("intent", "unknown"))
+        col2.metric("Agent Mode", latest_agent_turn.get("mode", "fallback"))
+        col3.metric("Suggested Actions", len(latest_agent_turn.get("suggested_actions", [])))
+        col4.metric("Information Needed", len(latest_agent_turn.get("clarifying_questions", [])))
     else:
-        st.info("还没有进行 Agent 对话。")
+        st.info("No Agent conversation yet.")
 
-    st.subheader("Agent Chat 行动同步")
+    st.subheader("Agent Chat Action Sync")
     chat_summary = summarize_chat_action_items(chat_action_items or [])
     col1, col2, col3 = st.columns(3)
-    col1.metric("Chat 行动项", chat_summary.get("total", 0))
-    col2.metric("高优先级 Chat 行动项", chat_summary.get("high", 0))
+    col1.metric("Chat Action Items", chat_summary.get("total", 0))
+    col2.metric("High-Priority Chat Action Items", chat_summary.get("high", 0))
     col3.metric(
-        "最近一次 Agent 模式",
-        (latest_agent_turn or {}).get("mode", "暂无"),
+        "Latest Agent Mode",
+        (latest_agent_turn or {}).get("mode", "None"),
     )
 
-    st.subheader("本周最重要提醒")
+    st.subheader("Top Reminder This Week")
     high_active = progress_summary.get("high_priority_active_count", 0)
     active_count = progress_summary.get("active_count", 0)
     if active_count:
         st.warning(
-            f"当前仍有 {active_count} 个行动项未关闭，其中 {high_active} 个为高优先级。建议优先处理现金流、逾期发票和高风险异常支出相关任务。"
+            f"There are still {active_count} open action items, including {high_active} high-priority items. Prioritize cash flow, overdue invoices, and high-risk suspicious-expense tasks."
         )
     else:
-        st.info("当前还没有生成行动项。请先进入 Agent 工作台选择任务，或在对话页提出一个财务问题。")
+        st.info("No action items have been generated yet. Choose a task in Agent Workspace or ask a finance question in Chat.")
 
     if use_llm:
-        st.caption("已启用大模型解释选项；Agent Chat API 调用仍由 ENABLE_AGENT_API 和 OPENAI_API_KEY 控制。")
-    st.caption(f"安全边界：{get_disclaimer()}")
+        st.caption("LLM explanation is enabled. Agent Chat API calls are still controlled by ENABLE_AGENT_API and OPENAI_API_KEY.")
+    st.caption(f"Safety Boundaries: {get_disclaimer()}")

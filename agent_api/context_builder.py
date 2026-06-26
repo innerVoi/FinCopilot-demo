@@ -16,6 +16,7 @@ SUMMARY_KEYS = [
     "progress_summary",
     "report_summary",
     "business_context",
+    "memory_context",
     "safety_context",
 ]
 
@@ -425,6 +426,7 @@ def build_agent_context_summary(context: dict) -> dict:
         "progress_summary": build_progress_summary_from_workspace(context.get("workspace")),
         "report_summary": build_report_summary(context.get("workspace")),
         "business_context": build_business_context_summary(context.get("agent_state")),
+        "memory_context": context.get("memory_context", {}),
         "safety_context": build_safety_context(),
     }
     return {key: summary.get(key) for key in SUMMARY_KEYS}

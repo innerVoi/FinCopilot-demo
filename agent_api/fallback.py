@@ -16,18 +16,24 @@ def infer_intent_from_query(user_query: str | None) -> str:
     """
     Infer intent from a user query with deterministic keyword rules.
     """
-    query = user_query or ""
-    if any(keyword in query for keyword in ["现金流", "钱够", "余额", "够不够"]):
+    query = (user_query or "").lower()
+    zh_cashflow = ["\u73b0\u91d1\u6d41", "\u94b1\u591f", "\u4f59\u989d", "\u591f\u4e0d\u591f"]
+    zh_anomaly = ["\u5f02\u5e38", "\u53ef\u7591", "\u652f\u51fa", "\u91cd\u590d"]
+    zh_purchase = ["\u4fc3\u9500", "\u8fdb\u8d27", "\u91c7\u8d2d"]
+    zh_goal = ["\u76ee\u6807", "\u9884\u7b97", "\u8ba1\u5212"]
+    zh_invoice = ["\u53d1\u7968", "\u6536\u6b3e", "\u4ed8\u6b3e", "\u6b20\u6b3e"]
+    zh_report = ["\u603b\u7ed3"]
+    if any(keyword in query for keyword in ["cash flow", "cashflow", "balance", "runway", "enough cash", "cash", *zh_cashflow]):
         return "cashflow_check"
-    if any(keyword in query for keyword in ["异常", "可疑", "支出", "重复"]):
+    if any(keyword in query for keyword in ["suspicious", "expense", "anomaly", "duplicate", "unusual", *zh_anomaly]):
         return "expense_anomaly_review"
-    if any(keyword in query for keyword in ["促销", "进货", "采购"]):
+    if any(keyword in query for keyword in ["promotion", "purchase", "procurement", "inventory", *zh_purchase]):
         return "promotion_or_purchase_planning"
-    if any(keyword in query for keyword in ["目标", "预算", "计划"]):
+    if any(keyword in query for keyword in ["goal", "budget", "plan", *zh_goal]):
         return "goal_or_budget_planning"
-    if any(keyword in query for keyword in ["发票", "收款", "付款", "欠款"]):
+    if any(keyword in query for keyword in ["invoice", "payment", "receivable", "payable", "collect", *zh_invoice]):
         return "invoice_or_payment_review"
-    if any(keyword in query for keyword in ["总结", "报告", "概览"]):
+    if any(keyword in query for keyword in ["reports", "report", "overview", "summary", *zh_report]):
         return "general_finance_summary"
     return "unknown"
 
@@ -79,13 +85,13 @@ def build_fallback_manager_plan(user_query: str | None) -> dict:
     )
     if intent == "cashflow_check":
         plan["clarifying_questions"] = [
-            "当前企业账户真实可用余额是多少？",
-            "未来 30 天是否有确定客户回款？",
+            "What is the current available cash balance?",
+            "Are there confirmed customer collections in the next 30 days?",
         ]
     elif intent == "promotion_or_purchase_planning":
         plan["clarifying_questions"] = [
-            "计划投入金额是多少？",
-            "这笔支出是否可以延期或分阶段执行？",
+            "How much do you plan to spend?",
+            "Can this expense be delayed or split into phases?",
         ]
     return validate_manager_plan(plan)
 
@@ -98,49 +104,49 @@ def build_fallback_specialist_result(user_query: str | None, agent_name: str) ->
     if agent_name == CASHFLOW_AGENT:
         result.update(
             {
-                "summary": "当前真实 Cashflow Agent API 未启用，建议在 Agent 工作台查看现金流分析结果。",
-                "findings": ["现金流风险需要结合交易、发票和补充余额信息判断。"],
-                "risks": ["如果真实余额和未来回款未知，现金流判断可能不完整。"],
-                "recommended_actions": ["确认真实余额。", "确认未来回款。", "核查近期到期发票。"],
+                "summary": "The live Cashflow Agent API is unavailable. Use the fallback cash-flow analysis for a first-pass review.",
+                "findings": ["Cash-flow risk should be interpreted using transactions, invoices, and confirmed balance information."],
+                "risks": ["If real cash balance and expected collections are unknown, the cash-flow view may be incomplete."],
+                "recommended_actions": ["Confirm real cash balance.", "Confirm upcoming collections.", "Review invoices due soon."],
                 "needs_user_input": True,
-                "questions": ["当前账户真实余额是多少？", "未来 30 天是否有确定回款？"],
+                "questions": ["What is the real account balance?", "Are there confirmed collections in the next 30 days?"],
             }
         )
     elif agent_name == ANOMALY_AGENT:
         result.update(
             {
-                "summary": "当前真实 Anomaly Agent API 未启用，建议查看规则异常和 LOF 模型异常。",
-                "findings": ["系统可基于规则和模型识别潜在异常支出。"],
-                "risks": ["模型高风险不等于事实异常，需要结合凭证和业务背景核查。"],
-                "recommended_actions": ["核查高风险交易。", "确认是否重复付款。", "补充常用供应商名单。"],
+                "summary": "The live Anomaly Agent API is unavailable. Review rule-based anomalies and LOF model flags.",
+                "findings": ["The system can identify potentially suspicious expenses using rules and model signals."],
+                "risks": ["A high model-risk score does not prove a transaction is abnormal; review receipts and business context."],
+                "recommended_actions": ["Review high-risk transactions.", "Check for duplicate payments.", "Add known suppliers."],
                 "needs_user_input": True,
-                "questions": ["是否存在已知正常的大额付款？", "相关商户是否为固定供应商？"],
+                "questions": ["Are there known normal large payments?", "Is the merchant a regular supplier?"],
             }
         )
     elif agent_name == PLANNING_AGENT:
         result.update(
             {
-                "summary": "当前真实 Planning Agent API 未启用，建议结合现金流、目标和行动项谨慎判断。",
-                "findings": ["经营计划需要结合现金流和目标缺口。"],
-                "risks": ["促销或采购可能增加现金流压力。"],
-                "recommended_actions": ["确认预算。", "确认预期收入。", "确认采购需求和现金缓冲。"],
+                "summary": "The live Planning Agent API is unavailable. Interpret the plan using cash flow, goals, and action items.",
+                "findings": ["Business planning should consider cash-flow pressure and goal gaps."],
+                "risks": ["Promotions or purchases may increase cash-flow pressure."],
+                "recommended_actions": ["Confirm the budget.", "Confirm expected revenue.", "Confirm purchase needs and cash buffer."],
                 "needs_user_input": True,
-                "questions": ["预计新增收入是多少？", "是否需要提前采购？"],
+                "questions": ["What additional revenue is expected?", "Is early purchasing required?"],
             }
         )
     elif agent_name == REPORT_AGENT:
         result.update(
             {
-                "summary": "当前真实 Report Agent API 未启用，可以先使用 Agent 工作流报告。",
-                "findings": ["本地 workflow 已记录任务规划、工具结果、行动项和进展。"],
-                "risks": ["报告基于上传数据和用户补充信息，可能不完整。"],
-                "recommended_actions": ["查看报告中心中的 Agent 工作流报告。"],
+                "summary": "The live Report Agent API is unavailable. Use the workflow report as a fallback report.",
+                "findings": ["The local workflow records task planning, tool results, action items, and progress."],
+                "risks": ["Reports are based on uploaded data and user-provided context, so they may be incomplete."],
+                "recommended_actions": ["Review the Agent workflow report in Reports."],
                 "needs_user_input": True,
-                "questions": ["是否还有未上传的重要发票、应收款或固定支出？"],
+                "questions": ["Are there important invoices, receivables, or fixed expenses not yet uploaded?"],
             }
         )
     else:
-        result["summary"] = "当前真实 Specialist Agent API 未启用，系统使用本地规则化能力。"
+        result["summary"] = "The live Specialist Agent API is unavailable. The system is using local fallback logic."
     result["safety_note"] = get_agent_safety_note()
     return validate_specialist_result(result, agent_name=agent_name)
 
@@ -148,27 +154,27 @@ def build_fallback_specialist_result(user_query: str | None, agent_name: str) ->
 def _fallback_answer_for_intent(intent: str) -> str:
     if intent == "cashflow_check":
         return (
-            "我会优先检查预算、发票、现金流和异常支出。目前真实 Agent API 未启用，"
-            "因此先使用本地规则化工作流。你可以在 Agent 工作台选择“检查未来 30 天现金流是否安全”查看完整过程。"
+            "I will first review budget, invoices, cash flow, and suspicious expenses. "
+            "The live Agent API is unavailable, so FinCopilot is using the local fallback workflow."
         )
     if intent == "expense_anomaly_review":
         return (
-            "我会结合规则异常和 LOF 模型结果，找出最值得核查的支出。目前真实 Agent API 未启用，"
-            "因此先使用本地规则化工作流。你可以在 Agent 工作台选择“处理本月最可疑的异常支出”。"
+            "I will use rule-based anomalies and LOF model signals to identify expenses that deserve review. "
+            "The live Agent API is unavailable, so FinCopilot is using the local fallback workflow."
         )
     if intent in ["goal_or_budget_planning", "promotion_or_purchase_planning"]:
         return (
-            "我会检查现金流、财务目标和行动项，帮助你评估当前计划是否稳妥。目前真实 Agent API 未启用，"
-            "因此先使用本地规则化工作流。后续版本将由 Planning Agent 生成更完整的方案比较。"
+            "I will review cash flow, goals, and action items to help assess the plan. "
+            "The live Agent API is unavailable, so FinCopilot is using the local fallback workflow."
         )
     if intent == "invoice_or_payment_review":
         return (
-            "我会优先整理发票、收款、付款和现金流压力。目前真实 Agent API 未启用，"
-            "因此先使用本地规则化工作流。你可以查看财务分析中的“发票与现金流”。"
+            "I will prioritize invoices, collections, payments, and cash-flow pressure. "
+            "The live Agent API is unavailable, so FinCopilot is using the local fallback workflow."
         )
     return (
-        "我可以帮助你检查现金流、异常支出、发票压力和财务目标。目前真实 Agent API 未启用，"
-        "因此先使用本地规则化能力。"
+        "I can help review cash flow, suspicious expenses, invoice pressure, and goals. "
+        "The live Agent API is unavailable, so FinCopilot is using local fallback logic."
     )
 
 

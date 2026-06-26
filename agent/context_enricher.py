@@ -56,17 +56,17 @@ def enrich_cashflow_summary(
             - unuploaded_invoices
             - large_upcoming_payments
         )
-        adjustment_reasons.append("已使用用户补充的真实账户余额修正现金流视图。")
+        adjustment_reasons.append("Adjusted the cash-flow view using the user-provided real account balance.")
     else:
         adjusted_projected_balance = base_projected_balance
-        notes.append("当前仍基于上传流水估算余额，未使用真实账户余额。")
+        notes.append("Balance is still estimated from uploaded transactions; real account balance was not used.")
 
     if expected_receivables:
-        adjustment_reasons.append("已计入未来 30 天预计客户回款。")
+        adjustment_reasons.append("Included expected customer collections over the next 30 days.")
     if unuploaded_invoices:
-        adjustment_reasons.append("已扣除未上传发票或固定支出估计。")
+        adjustment_reasons.append("Deducted estimated unuploaded invoices or fixed expenses.")
     if large_upcoming_payments:
-        adjustment_reasons.append("已扣除未来 30 天必须支付的大额款项。")
+        adjustment_reasons.append("Deducted required large payments over the next 30 days.")
 
     if adjusted_projected_balance < 0:
         adjusted_risk_level = "high"
@@ -79,7 +79,7 @@ def enrich_cashflow_summary(
         adjusted_risk_level = "low"
 
     if not adjustment_reasons:
-        adjustment_reasons.append("尚未提供可用于修正现金流视图的业务上下文。")
+        adjustment_reasons.append("No business context has been provided yet to adjust the cash-flow view.")
 
     return {
         "base_risk_level": cashflow.get("risk_level", "unknown"),
@@ -104,13 +104,13 @@ def enrich_anomaly_summary(
     context = business_context or {}
     notes = []
     if is_value_provided(context.get("known_authorized_large_payments")):
-        notes.append("用户提供了已知正常大额付款说明，部分高风险交易需结合业务背景核查。")
+        notes.append("The user provided known normal large-payment context; some high-risk transactions should be reviewed with that context.")
     if is_value_provided(context.get("recurring_vendor_list")):
-        notes.append("用户提供了常用供应商或固定商户信息，后续应优先核查陌生商户。")
+        notes.append("The user provided regular supplier or recurring merchant information; unfamiliar merchants should be prioritized for review.")
     if is_value_provided(context.get("business_context_for_top_anomalies")):
-        notes.append("用户补充了高风险交易业务背景，后续行动清单应优先处理仍无法解释的记录。")
+        notes.append("The user added business context for high-risk transactions; future action items should prioritize records that remain unexplained.")
     if not notes:
-        notes.append("当前异常判断主要基于规则和模型结果，尚未结合业务背景。")
+        notes.append("Current anomaly judgment is mainly based on rule and model results, without additional business context yet.")
 
     return {
         "rule_anomaly_count": 0
@@ -142,11 +142,11 @@ def enrich_goal_summary(
     expected_capacity = _to_float(context.get("expected_monthly_savings_capacity"))
 
     if is_value_provided(context.get("goal_priority_confirmation")):
-        notes.append(f"用户确认最高优先级目标为：{context.get('goal_priority_confirmation')}。")
+        notes.append(f"The user confirmed the highest-priority goal: {context.get('goal_priority_confirmation')}.")
     if is_value_provided(context.get("current_cash_balance")):
-        notes.append("用户补充了当前真实可用于目标储备的现金余额。")
+        notes.append("The user added the real cash balance currently available for goal reserves.")
     if expected_capacity:
-        notes.append(f"用户预计每月可用于储备或目标投入的金额为 {expected_capacity:.2f}。")
+        notes.append(f"The user expects {expected_capacity:.2f} to be available each month for reserves or goal contributions.")
 
     required_saving = None
     if isinstance(goals_df, pd.DataFrame) and not goals_df.empty:
@@ -163,10 +163,10 @@ def enrich_goal_summary(
                 .max()
             )
             if expected_capacity and expected_capacity < required_saving:
-                notes.append("基于用户补充的月度储备能力，部分目标可能需要调整期限或优先级。")
+                notes.append("Based on the user-provided monthly reserve capacity, some goals may need adjusted timelines or priorities.")
 
     if not notes:
-        notes.append("当前目标分析主要基于上传 goals.csv 和预算结果，尚未结合用户确认的目标优先级。")
+        notes.append("Current goal analysis is mainly based on uploaded goals.csv and budget results, without user-confirmed goal priority yet.")
 
     return {
         "goal_count": summary.get("goal_count", 0),

@@ -1,1 +1,1 @@
-"""UI helpers for FinCopilot V2.1."""
+"""UI helpers for FinCopilot V2.3."""

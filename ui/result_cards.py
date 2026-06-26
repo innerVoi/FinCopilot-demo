@@ -6,7 +6,7 @@ def render_status_badge(status_badge: dict | None):
     Render a status badge.
     """
     status_badge = status_badge or {}
-    label = status_badge.get("label", "状态")
+    label = status_badge.get("label", "Status")
     value = status_badge.get("value", "unknown")
     status_type = status_badge.get("type", "info")
     message = f"{label}: {value}"
@@ -26,7 +26,7 @@ def render_metric_cards(metric_cards: list[dict] | None):
     """
     cards = list(metric_cards or [])
     if not cards:
-        st.info("暂无关键指标。")
+        st.info("No key metrics yet.")
         return
     columns = st.columns(min(len(cards), 4))
     for index, card in enumerate(cards):
@@ -52,15 +52,36 @@ def render_risk_cards(risk_cards: list[dict] | None):
     Render risk cards.
     """
     cards = list(risk_cards or [])
-    st.subheader("主要风险")
+    st.subheader("Key Risks")
     if not cards:
-        st.info("本轮没有生成明确风险提醒。")
+        st.info("No explicit risk alerts were generated this turn.")
         return
     for card in cards:
-        title = card.get("title", "风险提醒")
+        title = card.get("title", "Risk Alert")
         description = card.get("description", "")
         source = card.get("source", "")
-        _render_message_by_type(card.get("type", "info"), f"**{title}**\n\n{description}\n\n来源：{source}")
+        _render_message_by_type(card.get("type", "info"), f"**{title}**\n\n{description}\n\nSource: {source}")
+
+
+def render_memory_cards(memory_cards: list[dict] | None):
+    """
+    Render memory cards used by this turn.
+    """
+    cards = list(memory_cards or [])
+    st.subheader("Business Memory Used This Turn")
+    if not cards:
+        st.info("This analysis is mainly based on the currently uploaded data.")
+        return
+    for card in cards:
+        with st.container(border=True):
+            st.markdown(f"**{card.get('title', '')}**")
+            description = card.get("description", "")
+            if description:
+                st.caption(description)
+            items = list(card.get("items") or [])
+            if items:
+                for item in items[:6]:
+                    st.markdown(f"- {item}")
 
 
 def render_action_cards(action_cards: list[dict] | None):
@@ -68,17 +89,17 @@ def render_action_cards(action_cards: list[dict] | None):
     Render suggested action cards.
     """
     cards = list(action_cards or [])
-    st.subheader("建议行动")
+    st.subheader("Suggested Actions")
     if not cards:
-        st.info("本轮没有生成新的建议行动。")
+        st.info("No new suggested actions were generated this turn.")
         return
     for card in cards:
         with st.container(border=True):
             st.markdown(f"**{card.get('title', '')}**")
             st.caption(
-                f"优先级：{card.get('priority', 'medium')} | "
-                f"建议截止：{card.get('deadline', '')} | "
-                f"状态：{card.get('status', 'pending')}"
+                f"Priority: {card.get('priority', 'medium')} | "
+                f"Suggested deadline: {card.get('deadline', '')} | "
+                f"Status: {card.get('status', 'pending')}"
             )
             description = card.get("description", "")
             if description:
@@ -90,9 +111,9 @@ def render_clarification_cards(clarification_cards: list[dict] | None):
     Render clarification cards.
     """
     cards = list(clarification_cards or [])
-    st.subheader("仍需补充的信息")
+    st.subheader("Information Still Needed")
     if not cards:
-        st.info("本轮没有必须补充的信息。")
+        st.info("No required follow-up information for this turn.")
         return
     for card in cards:
         st.warning(f"**{card.get('question', '')}**\n\n{card.get('why_needed', '')}")
@@ -103,14 +124,14 @@ def render_detail_sections(detail_sections: list[dict] | None):
     Render detail-entry cards.
     """
     sections = list(detail_sections or [])
-    st.subheader("查看详情")
+    st.subheader("Details")
     if not sections:
-        st.info("暂无详情入口。")
+        st.info("No detail links yet.")
         return
     for section in sections:
         st.markdown(
-            f"- **{section.get('label', '')}**："
-            f"{section.get('target_page', '')} / {section.get('section', '')}。"
+            f"- **{section.get('label', '')}**: "
+            f"{section.get('target_page', '')} / {section.get('section', '')}. "
             f"{section.get('description', '')}"
         )
 
@@ -120,13 +141,21 @@ def render_report_card(report: dict | None, report_markdown: str | None = None):
     Render report entry and download button.
     """
     report = report or {}
-    st.subheader("报告")
+    st.subheader("Reports")
     if not report.get("available"):
-        st.info("本轮暂未生成可下载报告。")
+        st.info("No downloadable report was generated for this turn yet.")
         return
-    st.success(report.get("title", "Multi-Agent 对话报告"))
+    st.success("Report generated")
+    st.markdown("**Report Title**")
+    st.write(report.get("title", "Multi-Agent Conversation Report"))
+    summary = report.get("summary", "")
+    if summary:
+        st.markdown("**Report Summary**")
+        st.markdown(summary)
+    with st.expander("View Full Report", expanded=False):
+        st.markdown(report_markdown or "No full report yet.")
     st.download_button(
-        label=report.get("download_label", "下载本轮报告"),
+        label=report.get("download_label", "Download This Report"),
         data=(report_markdown or "").encode("utf-8"),
         file_name="fincopilot_multi_agent_report.md",
         mime="text/markdown",
@@ -141,33 +170,34 @@ def render_answer_presentation(presentation: dict | None, turn_result: dict | No
     presentation = presentation or {}
     turn_result = turn_result or {}
 
-    st.subheader(presentation.get("headline", "FinCopilot 已完成本轮分析"))
+    st.subheader(presentation.get("headline", "FinCopilot has completed this analysis"))
     summary = presentation.get("summary", "")
     if summary:
         st.markdown(summary)
 
     render_status_badge(presentation.get("status_badge", {}))
     render_metric_cards(presentation.get("metric_cards", []))
+    render_memory_cards(presentation.get("memory_cards", []))
     render_risk_cards(presentation.get("risk_cards", []))
     render_action_cards(presentation.get("action_cards", []))
     render_clarification_cards(presentation.get("clarification_cards", []))
     render_detail_sections(presentation.get("detail_sections", []))
-    st.caption("你可以继续在下方展开“详细结果预览”，也可以进入详情页查看完整表格、历史记录和下载归档。")
+    st.caption("You can expand Detailed Result Preview below, or open the detail pages to review full tables, history, and downloadable archives.")
     render_report_card(presentation.get("report", {}), report_markdown=turn_result.get("report_markdown", ""))
 
-    with st.expander("查看完整文字回复"):
-        st.markdown(turn_result.get("assistant_reply", "") or "暂无完整文字回复。")
+    with st.expander("View Full Text Response"):
+        st.markdown(turn_result.get("assistant_reply", "") or "No full text response yet.")
 
     errors = turn_result.get("errors", [])
     if errors:
-        with st.expander("查看本轮 Agent 诊断信息"):
+        with st.expander("View Agent Diagnostics"):
             for error in errors:
                 st.markdown(f"- {error}")
             st.caption(
-                "api_status 只代表本地配置允许尝试真实 Agent；如果真实请求失败、模型不可用或输出无法解析，系统会自动 fallback。"
+                "api_status only means local configuration allows a Live Agent attempt. If the real request fails, the model is unavailable, or output cannot be parsed, the system falls back automatically."
             )
 
-    with st.expander("高级详情"):
+    with st.expander("Advanced Details"):
         tab_manager, tab_tools, tab_specialists, tab_trace, tab_safety = st.tabs(
             ["Manager Plan", "Tool Results", "Specialist Outputs", "Trace", "Safety"]
         )

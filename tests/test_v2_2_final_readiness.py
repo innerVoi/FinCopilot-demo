@@ -18,7 +18,7 @@ def test_final_docs_exist():
 
 def test_readme_contains_v22_final_contract():
     readme = read_text("README.md")
-    assert "FinCopilot V2.2" in readme
+    assert "FinCopilot V2.3" in readme
     assert "Copilot 主界面" in readme
     assert "默认尝试" in readme and "Agent API" in readme
     assert "fallback" in readme
@@ -27,8 +27,8 @@ def test_readme_contains_v22_final_contract():
 
 def test_demo_script_contains_v22_demo():
     demo_script = read_text("demo_script.md")
-    assert "FinCopilot V2.2 Demo 演示脚本" in demo_script
-    assert "V2.2 Demo" in demo_script
+    assert "FinCopilot V2.3 Demo 演示脚本" in demo_script
+    assert "V2.3" in demo_script
 
 
 def test_checklist_contains_key_sections():

@@ -1,16 +1,16 @@
 RESPONSIBLE_FINANCE_DISCLAIMER = (
-    "本分析仅用于财务整理、风险提醒和教育性支持，"
-    "不构成投资、税务、法律、债务处置或专业财务建议。"
-    "重要交易和财务决策请核查原始凭证，并在必要时咨询合格专业人士。"
+    "This analysis is for financial organization, risk reminders, and educational support only. "
+    "It is not investment, tax, legal, debt-resolution, or professional financial advice. "
+    "Review source documents before important financial decisions and consult qualified professionals when needed."
 )
 
 PROHIBITED_ADVICE_TOPICS = [
-    "投资建议",
-    "税务建议",
-    "法律建议",
-    "债务处置建议",
-    "收益承诺",
-    "欺诈认定",
+    "investment advice",
+    "tax advice",
+    "legal advice",
+    "debt-resolution advice",
+    "return promises",
+    "fraud determinations",
 ]
 
 
@@ -38,12 +38,13 @@ def build_finance_safety_instruction() -> str:
     """
     Build a safety instruction string for LLM prompts.
     """
-    topics = "、".join(PROHIBITED_ADVICE_TOPICS)
+    topics = ", ".join(PROHIBITED_ADVICE_TOPICS)
     return (
-        "你是一个负责任的财务整理与风险提醒助手。只能基于用户上传数据和"
-        "系统分析结果进行解释；不得认定欺诈；不得提供投资、税务、法律、"
-        f"债务处置建议或收益承诺。禁止主题包括：{topics}。"
-        "重要事项应建议用户核查原始凭证或咨询合格专业人士。"
+        "You are a responsible financial organization and risk-reminder assistant. "
+        "Explain only from uploaded data and system analysis results. Do not determine fraud, "
+        f"and do not provide investment, tax, legal, debt-resolution advice, or return promises. "
+        f"Prohibited topics include: {topics}. For important matters, advise users to review source documents "
+        "or consult qualified professionals."
     )
 
 

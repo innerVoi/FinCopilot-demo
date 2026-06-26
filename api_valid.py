@@ -4,7 +4,7 @@ Validate OPENAI_API_KEY for FinCopilot.
 Usage:
     python api_valid.py
     python api_valid.py --model gpt-5.4-mini
-    python api_valid.py --base-url https://api.openai.com
+    python api_valid.py --base-url https://api.zzz-api.top
     python api_valid.py --prompt "请用一句话说明你是谁"
     python api_valid.py --skip-chat-test
     python api_valid.py --test-responses-api
@@ -29,7 +29,8 @@ PLACEHOLDER_VALUES = {
     "test-key",
 }
 
-DEFAULT_COMPATIBLE_BASE_URL = "https://api.openai.com"
+DEFAULT_COMPATIBLE_BASE_URL = "https://api.zzz-api.top"
+# DEFAULT_COMPATIBLE_BASE_URL = "https://api.zhizengzeng.com/v1"
 
 
 def mask_api_key(api_key: str | None) -> str:
@@ -377,7 +378,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--base-url",
         default=None,
-        help="OpenAI-compatible API base URL. Defaults to OPENAI_BASE_URL / OPENAI_API_BASE, then https://api.openai.com.",
+        help="OpenAI-compatible API base URL. Defaults to OPENAI_BASE_URL / OPENAI_API_BASE, then https://api.zzz-api.top.",
     )
     parser.add_argument(
         "--prompt",

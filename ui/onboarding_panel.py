@@ -9,11 +9,11 @@ def _has_rows(dataframe) -> bool:
 def _missing_data_labels(transactions_df=None, invoices_df=None, goals_df=None) -> list[str]:
     missing = []
     if not _has_rows(transactions_df):
-        missing.append("交易流水")
+        missing.append("Transactions")
     if not _has_rows(invoices_df):
-        missing.append("发票数据")
+        missing.append("Invoices")
     if not _has_rows(goals_df):
-        missing.append("财务目标")
+        missing.append("Goals")
     return missing
 
 
@@ -57,42 +57,42 @@ def build_onboarding_messages(
     missing = _missing_data_labels(transactions_df, invoices_df, goals_df)
     messages = {
         "no_data": {
-            "title": "先上传数据，或直接使用样例数据开始",
-            "description": "FinCopilot 可以基于交易流水、发票和财务目标，帮你分析现金流、异常支出和本周行动项。",
-            "primary_cta": "使用默认样例数据",
-            "secondary_cta": "查看字段说明",
+            "title": "Upload data, or start with sample data",
+            "description": "FinCopilot can analyze cash flow, suspicious expenses, and weekly action items from transactions, invoices, and goals.",
+            "primary_cta": "Use sample data",
+            "secondary_cta": "View field guide",
             "tips": [
-                "可以先上传 transactions.csv、invoices.csv 和 goals.csv。",
-                "未上传时系统会使用内置样例数据，方便你快速体验完整流程。",
-                "准备好数据后，可以直接问：未来 30 天现金流安全吗？",
+                "You can upload transactions.csv, invoices.csv, and goals.csv.",
+                "If no files are uploaded, the built-in sample data lets you try the full flow quickly.",
+                "Once data is ready, ask: Is cash flow safe for the next 30 days?",
             ],
         },
         "partial_data": {
-            "title": "已有部分数据，可以先开始分析",
-            "description": "某些任务已经可用，缺失的数据会影响部分分析准确性。",
-            "primary_cta": "先做可用任务",
-            "secondary_cta": "补充缺失数据",
-            "tips": [f"当前还缺少：{'、'.join(missing)}。"] if missing else [],
+            "title": "Some data is ready",
+            "description": "Some tasks are available, while missing data may reduce analysis quality.",
+            "primary_cta": "Run available tasks",
+            "secondary_cta": "Add missing data",
+            "tips": [f"Currently missing: {', '.join(missing)}."] if missing else [],
         },
         "ready": {
-            "title": "数据已准备好，可以开始提问",
-            "description": "你可以检查未来现金流、可疑支出、发票压力或生成本周行动清单。",
-            "primary_cta": "选择推荐任务",
-            "secondary_cta": "直接输入问题",
-            "tips": ["建议先检查现金流，再核查异常支出和本周行动项。"],
+            "title": "Data is ready. You can start asking questions.",
+            "description": "You can check future cash flow, suspicious expenses, invoice pressure, or generate this week's action plan.",
+            "primary_cta": "Choose a recommended task",
+            "secondary_cta": "Ask a question directly",
+            "tips": ["Start with cash flow, then review suspicious expenses and this week's action items."],
         },
         "after_first_turn": {
-            "title": "分析已完成，建议继续处理下一步",
-            "description": "你可以查看行动项、补充缺失信息，或继续追问更具体的问题。",
-            "primary_cta": "继续追问",
-            "secondary_cta": "查看行动与报告",
-            "tips": ["下方会根据最近一次分析推荐后续问题。"],
+            "title": "Analysis Complete",
+            "description": "You can review action items, add missing information, or ask a more specific follow-up question.",
+            "primary_cta": "Follow up",
+            "secondary_cta": "Open Actions & Reports",
+            "tips": ["Follow-up questions are based on the latest analysis."],
         },
         "fallback_mode": {
-            "title": "当前使用 fallback 分析",
-            "description": "真实 Agent 暂不可用，但 fallback 本地规则和工具仍可生成基础分析结果。你可以继续上传数据和提问。",
-            "primary_cta": "继续使用 fallback",
-            "secondary_cta": "查看模型状态",
+            "title": "Fallback Analysis Is Active",
+            "description": "The live Agent API is unavailable, but local fallback rules and tools can still generate a useful analysis. You can continue uploading data and asking questions.",
+            "primary_cta": "Continue with fallback",
+            "secondary_cta": "View model status",
             "tips": [agent_api_status.get("user_message", "")] if agent_api_status else [],
         },
     }
@@ -132,5 +132,5 @@ def render_onboarding_panel(
                 if tip:
                     st.caption(tip)
         col1, col2 = st.columns(2)
-        col1.info(message.get("primary_cta", "开始"))
-        col2.info(message.get("secondary_cta", "查看详情"))
+        col1.info(message.get("primary_cta", "Start"))
+        col2.info(message.get("secondary_cta", "Details"))

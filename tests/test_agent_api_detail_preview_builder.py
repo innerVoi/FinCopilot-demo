@@ -8,6 +8,7 @@ from agent_api.detail_preview_builder import (
     build_detail_preview,
     build_goal_preview,
     build_invoice_preview,
+    build_memory_preview,
     build_report_preview,
     build_tool_preview,
     build_trace_preview,
@@ -111,6 +112,11 @@ def make_turn_result():
         "trace_markdown": "# Trace",
         "safety_result": {"safe": True, "risks": []},
         "trace": {"mode": "fallback"},
+        "memory_context": {
+            "memory_count": 1,
+            "used_memory_ids": ["mem_1"],
+            "known_suppliers": ["A 是长期供应商。"],
+        },
     }
 
 
@@ -175,7 +181,15 @@ def test_build_action_preview_extracts_chat_action_items():
 def test_build_report_preview_detects_report_markdown():
     preview = build_report_preview(make_turn_result())
     assert preview["has_report"] is True
+    assert "report_summary" in preview
+    assert len(preview["report_title"]) < 60
     assert preview["report_length"] > 0
+
+
+def test_build_memory_preview_reads_memory_context():
+    preview = build_memory_preview(make_turn_result())
+    assert preview["memory_count"] == 1
+    assert preview["known_suppliers"] == ["A 是长期供应商。"]
 
 
 def test_build_trace_preview_extracts_mode_and_intent():
@@ -217,6 +231,7 @@ def test_build_detail_preview_returns_complete_structure():
         "anomaly_preview",
         "goal_preview",
         "action_preview",
+        "memory_preview",
         "report_preview",
         "trace_preview",
         "tool_preview",

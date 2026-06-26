@@ -33,7 +33,7 @@ def test_build_fallback_agent_response_returns_final_schema():
 
 def test_fallback_response_contains_safety_note():
     response = build_fallback_agent_response("哪些支出可疑")
-    assert "本分析仅用于财务整理" in response["safety_note"]
+    assert "financial organization" in response["safety_note"]
 
 
 def test_empty_query_does_not_crash():

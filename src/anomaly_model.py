@@ -127,22 +127,22 @@ def build_model_evidence(row):
     Build a short evidence string for one model-scored transaction.
     """
     evidence_parts = [
-        f"金额为 {row.get('abs_amount', 0.0):.2f}",
-        f"类别为 {row.get('category', 'other')}",
+        f"amount is {row.get('abs_amount', 0.0):.2f}",
+        f"category is {row.get('category', 'other')}",
     ]
 
     if row.get("amount_category_zscore", 0.0) >= 1.5:
-        evidence_parts.append("金额相对同类别偏离程度较高")
+        evidence_parts.append("amount deviates strongly from the same category")
     if row.get("merchant_frequency", 1.0) <= 0.08:
-        evidence_parts.append("商户出现频率较低")
+        evidence_parts.append("merchant appears infrequently")
     if row.get("category_frequency", 1.0) <= 0.08:
-        evidence_parts.append("类别出现频率较低")
+        evidence_parts.append("category appears infrequently")
     if row.get("is_weekend", 0) == 1:
-        evidence_parts.append("该交易发生在周末")
+        evidence_parts.append("transaction occurred on a weekend")
     if row.get("is_income", 0) == 1:
-        evidence_parts.append("收入和支出都参与了局部交易模式计算")
+        evidence_parts.append("income and expense records were both included in local pattern scoring")
 
-    return "；".join(evidence_parts) + "。"
+    return "; ".join(evidence_parts) + "."
 
 
 def _low_risk_result(enriched_df, evidence):
@@ -178,7 +178,7 @@ def run_lof_detection(
     if len(feature_df) < 3:
         return _low_risk_result(
             enriched_df,
-            "样本数量过少，LOF 模型无法可靠评估异常程度。",
+            "Sample size is too small for the LOF model to evaluate anomaly strength reliably.",
         )
 
     n_samples = len(feature_df)

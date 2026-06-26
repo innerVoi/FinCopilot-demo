@@ -19,15 +19,15 @@ def get_reference_date(transactions_df=None, reference_date=None):
 
 
 def _recommend_goal_action(goal_status, goal_risk_level):
-    if goal_status == "已完成":
-        return "目标接近或已经完成，建议继续保持当前记录和复盘节奏。"
-    if goal_status == "已逾期":
-        return "该目标已逾期，建议更新目标截止日期或重新设定目标金额。"
+    if goal_status == "completed":
+        return "This goal is close to completion or already completed. Keep the current tracking and review cadence."
+    if goal_status == "overdue":
+        return "This goal is overdue. Update the target date or reset the target amount."
     if goal_risk_level == "high":
-        return "当前净现金流不足以稳定支持该目标，建议重新评估目标期限或每月储蓄计划。"
+        return "Current net cash flow may not support this goal reliably. Reassess the timeline or monthly savings plan."
     if goal_risk_level == "medium":
-        return "建议跟踪该目标的月度进展，并优先减少非必要支出。"
-    return "目标进展相对平稳，建议继续保持当前储蓄节奏。"
+        return "Track monthly progress for this goal and prioritize reducing non-essential spending."
+    return "Goal progress is relatively stable. Keep the current savings pace."
 
 
 def analyze_single_goal(
@@ -66,25 +66,25 @@ def analyze_single_goal(
 
     goal_risk_level = "low"
     if remaining_amount == 0:
-        goal_status = "已完成"
+        goal_status = "completed"
     else:
         if days_remaining == 0:
             goal_risk_level = "high"
-            goal_status = "已逾期"
+            goal_status = "overdue"
         elif required_monthly_saving > net_cashflow:
             goal_risk_level = "high"
-            goal_status = "风险较高"
+            goal_status = "high risk"
         elif cashflow_risk_level == "high" and priority == "high":
             goal_risk_level = "high"
-            goal_status = "风险较高"
+            goal_status = "high risk"
         elif required_monthly_saving > net_cashflow * 0.5:
             goal_risk_level = "medium"
-            goal_status = "需要关注"
+            goal_status = "needs attention"
         elif cashflow_risk_level == "medium" and priority in ["high", "medium"]:
             goal_risk_level = "medium"
-            goal_status = "需要关注"
+            goal_status = "needs attention"
         else:
-            goal_status = "进展良好"
+            goal_status = "on track"
 
     return {
         "goal_id": goal.get("goal_id", ""),
@@ -172,7 +172,7 @@ def analyze_goals(
     return {
         "summary": {
             "goal_count": int(len(goals_analysis_df)),
-            "completed_goal_count": int((goals_analysis_df["goal_status"] == "已完成").sum()),
+            "completed_goal_count": int((goals_analysis_df["goal_status"] == "completed").sum()),
             "high_risk_goal_count": int((goals_analysis_df["goal_risk_level"] == "high").sum()),
             "medium_risk_goal_count": int((goals_analysis_df["goal_risk_level"] == "medium").sum()),
             "total_target_amount": total_target,

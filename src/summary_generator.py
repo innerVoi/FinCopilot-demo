@@ -172,28 +172,28 @@ def template_generate_planning_summary(context: dict) -> str:
     cashflow_reasons = cashflow.get("risk_reasons", [])
     upcoming_invoice_outflow = cashflow.get("upcoming_invoice_outflow_30d", due_30d_amount)
 
-    category_text = "暂无类别支出数据。"
+    category_text = "No category spending data is available."
     if category_spending:
-        category_text = "；".join(
-            f"{item.get('category')} 支出 {item.get('expense_amount', 0):.2f}"
+        category_text = "; ".join(
+            f"{item.get('category')} spending {item.get('expense_amount', 0):.2f}"
             for item in category_spending[:3]
         )
 
     anomaly_count = len(rule_anomalies) + len(model_anomalies)
-    goal_text = "暂无财务目标数据。"
+    goal_text = "No goals data is available."
     if goal_summary:
         goal_text = (
-            f"当前共有 {goal_summary.get('goal_count', 0)} 个财务目标，"
-            f"已完成 {goal_summary.get('completed_goal_count', 0)} 个，"
-            f"高风险目标 {goal_summary.get('high_risk_goal_count', 0)} 个，"
-            f"整体完成率约为 {goal_summary.get('overall_progress_percent', 0.0):.1f}%。"
+            f"There are {goal_summary.get('goal_count', 0)} goals, "
+            f"{goal_summary.get('completed_goal_count', 0)} completed, "
+            f"{goal_summary.get('high_risk_goal_count', 0)} high-risk goals, "
+            f"and overall progress is about {goal_summary.get('overall_progress_percent', 0.0):.1f}%."
         )
         if goals:
             focus_goals = [
-                f"{goal.get('goal_name')}（{goal.get('goal_status')}）"
+                f"{goal.get('goal_name')} ({goal.get('goal_status')})"
                 for goal in goals[:3]
             ]
-            goal_text += " 建议优先关注：" + "；".join(focus_goals) + "。"
+            goal_text += " Priority focus: " + "; ".join(focus_goals) + "."
     elif goals:
         goal_items = []
         for goal in goals:
@@ -201,36 +201,36 @@ def template_generate_planning_summary(context: dict) -> str:
             current = goal.get("current_amount") or 0
             progress = current / target if target else 0
             goal_items.append(
-                f"{goal.get('goal_name')} 当前完成约 {progress:.1%}"
+                f"{goal.get('goal_name')} is about {progress:.1%} complete"
             )
-        goal_text = "；".join(goal_items)
+        goal_text = "; ".join(goal_items)
 
     return (
-        "## 本期财务概况\n"
-        f"本期总收入为 {total_income:.2f}，总支出为 {total_expense:.2f}，"
-        f"净现金流为 {net_cashflow:.2f}。\n\n"
-        "## 预算与支出观察\n"
-        f"支出最多的类别为 {top_category}，固定支出占比约为 {fixed_ratio:.1%}。"
+        "## Financial Snapshot\n"
+        f"Total income is {total_income:.2f}, total expense is {total_expense:.2f}, "
+        f"and net cash flow is {net_cashflow:.2f}.\n\n"
+        "## Budget and Spending Observations\n"
+        f"The highest spending category is {top_category}, and fixed expenses account for about {fixed_ratio:.1%}. "
         f"{category_text}\n\n"
-        "## 发票与现金流提醒\n"
-        f"未来 30 天待付发票金额为 {upcoming_invoice_outflow:.2f}，"
-        f"逾期发票金额为 {overdue_amount:.2f}。根据当前上传数据估算，"
-        f"未来 30 天预计余额为 {projected_balance:.2f}，现金流风险等级为 {cashflow_risk}，"
-        f"现金缓冲天数约为 {cash_buffer_days:.1f} 天。"
-        f"主要原因包括：{'；'.join(cashflow_reasons) if cashflow_reasons else '暂无明显风险原因。'}\n\n"
-        "## 异常支出提醒\n"
-        f"当前摘要上下文中包含 {anomaly_count} 条重点异常或模型高分记录。"
-        "这些记录不代表已确认问题，只表示可能需要核查。\n\n"
-        "## 财务目标观察\n"
+        "## Invoices and Cash-Flow Alerts\n"
+        f"Invoices due in the next 30 days total {upcoming_invoice_outflow:.2f}, "
+        f"and overdue invoices total {overdue_amount:.2f}. Based on the uploaded data, "
+        f"the projected balance over the next 30 days is {projected_balance:.2f}, "
+        f"cash-flow risk is {cashflow_risk}, and the cash buffer is about {cash_buffer_days:.1f} days. "
+        f"Main reasons: {'; '.join(cashflow_reasons) if cashflow_reasons else 'No obvious risk drivers yet.'}\n\n"
+        "## Suspicious Expense Alerts\n"
+        f"The summary context contains {anomaly_count} priority anomaly or high-scoring model records. "
+        "These records are not confirmed issues; they only indicate items that may need review.\n\n"
+        "## Goals\n"
         f"{goal_text}\n\n"
-        "## 建议行动\n"
-        "1. 优先核查高风险异常交易的原始凭证和账单。\n"
-        "2. 复查未来 30 天到期和逾期发票，安排付款计划。\n"
-        "3. 对支出占比较高的类别设置预算提醒或复盘机制。\n\n"
-        "## 假设与限制\n"
-        "本摘要仅基于当前上传的交易流水、发票和财务目标数据生成，"
-        "未包含未上传的现金交易、贷款、税务细节或外部账户信息。\n\n"
-        "## 免责声明\n"
+        "## Suggested Actions\n"
+        "1. Review source documents and bills for high-risk anomalous transactions first.\n"
+        "2. Review invoices due or overdue in the next 30 days and arrange a payment plan.\n"
+        "3. Set budget alerts or a review cadence for categories with concentrated spending.\n\n"
+        "## Assumptions and Limits\n"
+        "This summary is generated only from the uploaded transactions, invoices, and goals data. "
+        "It does not include cash transactions, loans, tax details, or external account information that were not uploaded.\n\n"
+        "## Disclaimer\n"
         f"{get_disclaimer()}"
     )
 

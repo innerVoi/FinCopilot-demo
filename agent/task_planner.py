@@ -23,13 +23,13 @@ DEFAULT_TOOL_SEQUENCES = {
 }
 
 TOOL_PURPOSES = {
-    "analyze_budget": "了解近期收入、支出和净现金流。",
-    "analyze_invoices": "识别逾期、未支付和未来到期发票。",
-    "analyze_cashflow": "估算未来 30 天余额和现金流风险等级。",
-    "detect_rule_anomalies": "识别可能影响经营现金流的规则异常。",
-    "detect_lof_anomalies": "识别偏离局部交易模式的潜在异常。",
-    "explain_transaction_risk": "对选定异常生成风险解释；当前阶段不自动批量调用。",
-    "analyze_goals": "计算目标完成率、缺口和风险等级。",
+    "analyze_budget": "Understand recent income, expenses, and net cash flow.",
+    "analyze_invoices": "Identify overdue, unpaid, and upcoming invoices.",
+    "analyze_cashflow": "Estimate 30-day balance and cash-flow risk level.",
+    "detect_rule_anomalies": "Detect rule anomalies that may affect business cash flow.",
+    "detect_lof_anomalies": "Detect potential anomalies that deviate from local transaction patterns.",
+    "explain_transaction_risk": "Generate a risk explanation for a selected anomaly; not called automatically in batch at this stage.",
+    "analyze_goals": "Calculate goal progress, gaps, and risk levels.",
 }
 
 
@@ -91,13 +91,13 @@ def create_task_plan(task_id: str, data_check: dict | None = None) -> dict:
     ]
     plan_status = infer_plan_status(data_check, validation)
     planner_notes = [
-        "当前使用规则化 planner，不调用 LLM 进行自动规划。",
-        "关键财务指标由确定性 Python 工具计算。",
+        "The current planner is rule-based and does not call an LLM for automatic planning.",
+        "Key financial metrics are calculated by deterministic Python tools.",
     ]
     if plan_status == "needs_clarification":
-        planner_notes.append("可以先做初步分析，但建议补充澄清信息后再生成行动清单。")
+        planner_notes.append("An initial analysis can run now, but clarification should be added before generating action items.")
     if plan_status == "blocked":
-        planner_notes.append("当前缺少关键数据或工具，无法可靠执行完整任务。")
+        planner_notes.append("Key data or tools are missing, so the full task cannot run reliably.")
 
     return {
         "task_id": task_id,

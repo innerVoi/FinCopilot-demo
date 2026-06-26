@@ -1,8 +1,9 @@
 import json
 
 DISCLAIMER = (
-    "本报告仅用于财务整理、风险提醒和教育性支持，不构成投资、税务、法律、"
-    "债务处置或专业财务建议。重要交易和财务决策请核查原始凭证，并在必要时咨询合格专业人士。"
+    "This report is for financial organization, risk reminders, and educational support only. "
+    "It is not investment, tax, legal, debt-resolution, or professional financial advice. "
+    "Review source documents before important financial decisions and consult qualified professionals when needed."
 )
 
 
@@ -11,13 +12,13 @@ def safe_markdown_value(value) -> str:
     Safely convert values into Markdown text.
     """
     if value is None:
-        return "无"
+        return "None"
     if isinstance(value, (dict, list)):
         return f"```json\n{json.dumps(value, ensure_ascii=False, indent=2)}\n```"
     return str(value)
 
 
-def markdown_bullets(items, empty_text="无") -> str:
+def markdown_bullets(items, empty_text="None") -> str:
     """
     Convert a list into Markdown bullets.
     """
@@ -41,13 +42,13 @@ def build_manager_section(manager_plan: dict | None) -> str:
     manager_plan = manager_plan or {}
     return "\n".join(
         [
-            "## 2. Manager Agent 任务理解",
+            "## 2. Manager Agent Task Understanding",
             "",
             f"- Intent: {manager_plan.get('intent', 'unknown')}",
-            f"- Selected Agents: {', '.join(manager_plan.get('selected_agents', []) or []) or '无'}",
-            f"- Tool Plan: {', '.join(manager_plan.get('tool_plan', []) or []) or '无'}",
+            f"- Selected Agents: {', '.join(manager_plan.get('selected_agents', []) or []) or 'None'}",
+            f"- Tool Plan: {', '.join(manager_plan.get('tool_plan', []) or []) or 'None'}",
             "",
-            "**澄清问题：**",
+            "**Clarifying Questions:**",
             markdown_bullets(manager_plan.get("clarifying_questions", [])),
         ]
     )
@@ -57,9 +58,9 @@ def build_tool_results_section(tool_results: list[dict] | None) -> str:
     """
     Build the tool summary call section.
     """
-    lines = ["## 3. 工具摘要调用", ""]
+    lines = ["## 3. Tool Summary Calls", ""]
     if not tool_results:
-        lines.append("- 无工具摘要调用。")
+        lines.append("- No tool summary calls.")
         return "\n".join(lines)
 
     for result in tool_results:
@@ -78,9 +79,9 @@ def build_specialist_outputs_section(specialist_outputs: dict | None) -> str:
     """
     Build the Specialist Agents output section.
     """
-    lines = ["## 4. Specialist Agents 输出", ""]
+    lines = ["## 4. Specialist Agent Outputs", ""]
     if not specialist_outputs:
-        lines.append("- 无 Specialist Agent 输出。")
+        lines.append("- No Specialist Agent outputs.")
         return "\n".join(lines)
 
     for agent_name, payload in specialist_outputs.items():
@@ -108,10 +109,13 @@ def build_multi_agent_report(turn_result: dict | None) -> str:
     turn_result = turn_result or {}
     manager_plan = turn_result.get("manager_plan", {}) or {}
     trace = turn_result.get("trace", {}) or {}
+    persisted_actions = ((turn_result.get("persistence_result") or {}).get("actions") or [])
+    pending_actions = sum(1 for item in persisted_actions if isinstance(item, dict) and item.get("status") == "pending")
+    handled_actions = sum(1 for item in persisted_actions if isinstance(item, dict) and item.get("status") != "pending")
     lines = [
-        "# FinCopilot Multi-Agent 对话报告",
+        "# FinCopilot Multi-Agent Conversation Report",
         "",
-        "## 1. 用户问题",
+        "## 1. User Question",
         "",
         safe_markdown_value(turn_result.get("user_query", "")),
         "",
@@ -121,15 +125,18 @@ def build_multi_agent_report(turn_result: dict | None) -> str:
         "",
         build_specialist_outputs_section(turn_result.get("specialist_outputs", {})),
         "",
-        "## 5. 综合回复",
+        "## 5. Synthesized Response",
         "",
         safe_markdown_value(turn_result.get("assistant_reply", "")),
         "",
-        "## 6. 建议行动",
+        "## 6. Suggested Actions",
         "",
         markdown_bullets(turn_result.get("suggested_actions", [])),
         "",
-        "## 7. 仍需补充的信息",
+        f"- Pending action items: {pending_actions}",
+        f"- Handled action items: {handled_actions}",
+        "",
+        "## 7. Information Still Needed",
         "",
         markdown_bullets(turn_result.get("clarifying_questions", [])),
         "",
@@ -137,13 +144,13 @@ def build_multi_agent_report(turn_result: dict | None) -> str:
         "",
         safe_markdown_value(trace),
         "",
-        "## 9. 假设与限制",
+        "## 9. Assumptions and Limits",
         "",
-        "- 所有关键财务数值来自本地确定性工具和已加载样例/上传数据。",
-        "- Agent 输出用于解释、规划和整理，不直接修改原始数据。",
-        "- 当前版本不做跨 session 持久化，不发送邮件、短信或日历提醒。",
+        "- All key financial numbers come from local deterministic tools and loaded sample or uploaded data.",
+        "- Agent outputs are used for explanation, planning, and organization; they do not directly modify source data.",
+        "- This version does not persist across sessions or send email, SMS, or calendar reminders.",
         "",
-        "## 10. 安全边界与免责声明",
+        "## 10. Safety Boundaries and Disclaimer",
         "",
         DISCLAIMER,
     ]

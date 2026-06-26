@@ -5,6 +5,7 @@ from agent_api.answer_presenter import (
     build_detail_sections,
     build_headline,
     build_metric_cards,
+    build_memory_cards,
     build_report_card,
     build_risk_cards,
     build_status_badge,
@@ -18,28 +19,28 @@ from agent_api.answer_presenter import (
 def make_turn_result():
     return {
         "mode": "fallback",
-        "assistant_reply": "现金流存在一定压力。建议先确认余额。",
+        "assistant_reply": "Cash flow has some pressure. Confirm the balance first.",
         "manager_plan": {"intent": "cashflow_check"},
         "tool_results": [{"tool_name": "get_cashflow_summary"}],
         "specialist_outputs": {
             "cashflow_agent": {
                 "result": {
-                    "summary": "现金流安全性分析已完成",
-                    "risks": ["未来回款信息不完整"],
+                    "summary": "Cash-flow safety analysis is complete",
+                    "risks": ["Upcoming collection information is incomplete"],
                 }
             }
         },
-        "suggested_actions": ["确认当前真实账户余额"],
+        "suggested_actions": ["Confirm the real account balance"],
         "chat_action_items": [
             {
-                "title": "确认当前真实账户余额",
+                "title": "Confirm the real account balance",
                 "priority": "medium",
-                "description": "该信息会影响现金流判断。",
-                "suggested_deadline": "3 天内",
+                "description": "This information affects cash-flow judgment.",
+                "suggested_deadline": "within 3 days",
                 "status": "pending",
             }
         ],
-        "clarifying_questions": ["当前企业账户真实可用余额是多少？"],
+        "clarifying_questions": ["What is the current available business cash balance?"],
         "report_markdown": "# report",
     }
 
@@ -62,7 +63,7 @@ def test_infer_status_type_handles_values():
 
 
 def test_build_headline_cashflow():
-    assert "现金流" in build_headline({"manager_plan": {"intent": "cashflow_check"}})
+    assert "Cash-flow" in build_headline({"manager_plan": {"intent": "cashflow_check"}})
 
 
 def test_build_summary_empty_turn_result_does_not_crash():
@@ -71,7 +72,7 @@ def test_build_summary_empty_turn_result_does_not_crash():
 
 def test_build_status_badge_returns_dict():
     badge = build_status_badge(make_turn_result())
-    assert badge["label"] == "Agent 模式"
+    assert badge["label"] == "Agent Mode"
 
 
 def test_build_metric_cards_returns_list():
@@ -82,24 +83,24 @@ def test_build_metric_cards_returns_list():
 def test_build_risk_cards_extracts_specialist_risks():
     cards = build_risk_cards(make_turn_result())
     assert cards[0]["source"] == "cashflow_agent"
-    assert "回款" in cards[0]["description"]
+    assert "collection" in cards[0]["description"]
 
 
 def test_build_action_cards_uses_chat_action_items():
     cards = build_action_cards(make_turn_result())
-    assert cards[0]["title"] == "确认当前真实账户余额"
-    assert cards[0]["deadline"] == "3 天内"
+    assert cards[0]["title"] == "Confirm the real account balance"
+    assert cards[0]["deadline"] == "within 3 days"
 
 
 def test_build_clarification_cards_extracts_questions():
     cards = build_clarification_cards(make_turn_result())
-    assert "真实可用余额" in cards[0]["question"]
+    assert "available" in cards[0]["question"]
 
 
 def test_build_detail_sections_by_intent():
     sections = build_detail_sections(make_turn_result())
-    assert sections[0]["target_page"] == "Copilot 主界面"
-    assert any(section["target_page"] == "分析详情" for section in sections)
+    assert sections[0]["target_page"] == "Copilot Home"
+    assert any(section["target_page"] == "Analysis Details" for section in sections)
 
 
 def test_build_detail_sections_do_not_return_legacy_pages():
@@ -111,6 +112,20 @@ def test_build_detail_sections_do_not_return_legacy_pages():
 def test_build_report_card_detects_report():
     report = build_report_card(make_turn_result())
     assert report["available"] is True
+    assert "summary" in report
+    assert len(report["title"]) < 40
+
+
+def test_build_memory_cards_extracts_memory_context():
+    turn_result = make_turn_result()
+    turn_result["memory_context"] = {
+        "memory_count": 1,
+        "used_memory_ids": ["mem_1"],
+        "cash_context": ["Current cash balance is 12000."],
+    }
+    cards = build_memory_cards(turn_result)
+    assert cards[0]["title"] == "Business Memory Used"
+    assert "12000" in cards[0]["items"][0]
 
 
 def test_build_answer_presentation_returns_complete_structure():
@@ -120,6 +135,7 @@ def test_build_answer_presentation_returns_complete_structure():
         "summary",
         "status_badge",
         "metric_cards",
+        "memory_cards",
         "risk_cards",
         "action_cards",
         "clarification_cards",

@@ -1,1 +1,1 @@
-"""Agent API foundation for FinCopilot V2.1."""
+"""Agent API foundation for FinCopilot V2.3."""

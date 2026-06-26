@@ -143,7 +143,7 @@ def execute_tool_step(tool_step: dict, context: dict, reuse_existing: bool = Tru
 
     if tool_name in ["explain_transaction_risk", "generate_planning_summary"]:
         record["status"] = "skipped"
-        record["error"] = "该工具需要用户主动触发，Agent Workspace 不会自动批量调用大模型。"
+        record["error"] = "This tool requires explicit user action. Agent Workspace does not automatically batch-call LLM tools."
         return record
 
     if reuse_existing and has_context_output(context, output_key):
@@ -155,7 +155,7 @@ def execute_tool_step(tool_step: dict, context: dict, reuse_existing: bool = Tru
     missing_inputs = _missing_inputs(tool_step, context)
     if missing_inputs:
         record["status"] = "skipped"
-        record["error"] = f"缺少必要输入：{', '.join(missing_inputs)}"
+        record["error"] = f"Missing required inputs: {', '.join(missing_inputs)}"
         return record
 
     try:

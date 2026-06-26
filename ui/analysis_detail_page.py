@@ -4,7 +4,7 @@ import streamlit as st
 from src.safety import get_disclaimer
 
 
-EMPTY_STATE = "暂无数据。请先在 Copilot 主界面上传数据，或使用默认样例数据。"
+EMPTY_STATE = "No data yet. Upload data on Copilot Home or use sample data."
 
 
 def _is_non_empty_df(value) -> bool:
@@ -34,11 +34,11 @@ def _format_percent(value):
 
 def _format_days(value):
     if value == float("inf"):
-        return "充足"
+        return "Sufficient"
     try:
-        return f"{float(value):,.1f} 天"
+        return f"{float(value):,.1f} days"
     except (TypeError, ValueError):
-        return "暂无"
+        return "N/A"
 
 
 def _show_dataframe(title: str, dataframe):
@@ -67,17 +67,17 @@ def render_budget_detail_tab(transactions_df=None, budget_result=None):
         return
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("总收入", _format_money(summary.get("total_income")))
-    col2.metric("总支出", _format_money(summary.get("total_expense")))
-    col3.metric("净现金流", _format_money(summary.get("net_cashflow")))
-    col4.metric("支出收入比", _format_percent(summary.get("expense_income_ratio")))
+    col1.metric("Total Income", _format_money(summary.get("total_income")))
+    col2.metric("Total Expenses", _format_money(summary.get("total_expense")))
+    col3.metric("Net Cash Flow", _format_money(summary.get("net_cashflow")))
+    col4.metric("Expense / Income Ratio", _format_percent(summary.get("expense_income_ratio")))
 
     col5, col6 = st.columns(2)
-    col5.metric("Top 支出类别", summary.get("top_expense_category") or "暂无")
-    col6.metric("最大单笔支出", _format_money(summary.get("largest_expense")))
+    col5.metric("Top Expense Category", summary.get("top_expense_category") or "N/A")
+    col6.metric("Largest Expense", _format_money(summary.get("largest_expense")))
 
-    _show_dataframe("类别支出表", budget_result.get("category_spending"))
-    _show_dataframe("月度摘要", budget_result.get("monthly_summary"))
+    _show_dataframe("Category Spending", budget_result.get("category_spending"))
+    _show_dataframe("Monthly Summary", budget_result.get("monthly_summary"))
     transaction_columns = [
         "date",
         "description",
@@ -89,7 +89,7 @@ def render_budget_detail_tab(transactions_df=None, budget_result=None):
         "category_confidence",
         "category_reason",
     ]
-    _show_dataframe("已分类交易表", _safe_columns(transactions_df, transaction_columns))
+    _show_dataframe("Categorized Transactions", _safe_columns(transactions_df, transaction_columns))
 
 
 def render_invoice_cashflow_detail_tab(invoices_df=None, invoice_result=None, cashflow_result=None):
@@ -104,25 +104,25 @@ def render_invoice_cashflow_detail_tab(invoices_df=None, invoice_result=None, ca
         return
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("发票总额", _format_money(summary.get("total_invoice_amount")))
-    col2.metric("已付金额", _format_money(summary.get("paid_invoice_amount")))
-    col3.metric("未付金额", _format_money(summary.get("unpaid_invoice_amount")))
+    col1.metric("Total Invoice Amount", _format_money(summary.get("total_invoice_amount")))
+    col2.metric("Paid Amount", _format_money(summary.get("paid_invoice_amount")))
+    col3.metric("Unpaid Amount", _format_money(summary.get("unpaid_invoice_amount")))
 
     col4, col5, col6 = st.columns(3)
-    col4.metric("逾期金额", _format_money(summary.get("overdue_invoice_amount")))
-    col5.metric("7 天内到期", _format_money(summary.get("due_7d_amount")))
-    col6.metric("30 天内到期", _format_money(summary.get("due_30d_amount")))
+    col4.metric("Overdue Amount", _format_money(summary.get("overdue_invoice_amount")))
+    col5.metric("Due in 7 Days", _format_money(summary.get("due_7d_amount")))
+    col6.metric("Due in 30 Days", _format_money(summary.get("due_30d_amount")))
 
-    st.subheader("现金流摘要")
+    st.subheader("Cash-flow Summary")
     col7, col8, col9 = st.columns(3)
-    col7.metric("风险等级", cashflow_result.get("risk_level", "unknown"))
-    col8.metric("30 天预计余额", _format_money(cashflow_result.get("projected_balance_30d")))
-    col9.metric("现金缓冲天数", _format_days(cashflow_result.get("cash_buffer_days")))
+    col7.metric("Risk Level", cashflow_result.get("risk_level", "unknown"))
+    col8.metric("Projected 30-Day Balance", _format_money(cashflow_result.get("projected_balance_30d")))
+    col9.metric("Cash Buffer Days", _format_days(cashflow_result.get("cash_buffer_days")))
     for reason in cashflow_result.get("risk_reasons", []) or []:
         st.markdown(f"- {reason}")
-    _show_dataframe("发票明细表", invoices_df)
-    _show_dataframe("未来 7 天到期发票", invoice_result.get("upcoming_7d"))
-    _show_dataframe("逾期发票", invoice_result.get("overdue"))
+    _show_dataframe("Invoice Details", invoices_df)
+    _show_dataframe("Invoices Due in 7 Days", invoice_result.get("upcoming_7d"))
+    _show_dataframe("Overdue Invoices", invoice_result.get("overdue"))
 
 
 def render_anomaly_detail_tab(rule_anomalies_df=None, lof_result_df=None, risk_explanation=None):
@@ -136,19 +136,20 @@ def render_anomaly_detail_tab(rule_anomalies_df=None, lof_result_df=None, risk_e
         high_count = int((lof_result_df["risk_level"] == "high").sum())
         medium_count = int((lof_result_df["risk_level"] == "medium").sum())
     col1, col2, col3 = st.columns(3)
-    col1.metric("规则异常数量", rule_count)
-    col2.metric("LOF 高风险数量", high_count)
-    col3.metric("LOF 中风险数量", medium_count)
+    col1.metric("Rule Anomalies", rule_count)
+    col2.metric("LOF High-Risk Items", high_count)
+    col3.metric("LOF Medium-Risk Items", medium_count)
 
-    _show_dataframe("规则异常表", rule_anomalies_df)
-    _show_dataframe("模型异常表", lof_result_df)
+    _show_dataframe("Rule-Based Anomalies", rule_anomalies_df)
+    _show_dataframe("Model-Based Anomalies", lof_result_df)
     if risk_explanation:
-        st.subheader("单条异常解释结果")
+        st.subheader("Single-Anomaly Explanation")
         st.json(risk_explanation)
-    with st.expander("异常检测方法说明", expanded=False):
+    with st.expander("Anomaly Detection Method", expanded=False):
         st.markdown(
-            "规则异常用于识别明确的金额、重复、逾期等模式；LOF 模型用于提示偏离历史局部模式的交易。"
-            "这些结果仅用于核查提醒，不代表欺诈认定。"
+            "Rule-based checks identify clear amount, duplicate, overdue, and category patterns. "
+            "The LOF model flags transactions that deviate from local historical patterns. "
+            "These results are review reminders, not fraud determinations."
         )
 
 
@@ -164,16 +165,16 @@ def render_goal_detail_tab(goals_df=None, goal_result=None):
         return
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("目标数量", summary.get("goal_count", 0))
-    col2.metric("总目标金额", _format_money(summary.get("total_target_amount")))
-    col3.metric("已完成金额", _format_money(summary.get("total_current_amount")))
-    col4.metric("剩余金额", _format_money(summary.get("total_remaining_amount")))
+    col1.metric("Goal Count", summary.get("goal_count", 0))
+    col2.metric("Total Target Amount", _format_money(summary.get("total_target_amount")))
+    col3.metric("Current Completed Amount", _format_money(summary.get("total_current_amount")))
+    col4.metric("Remaining Gap", _format_money(summary.get("total_remaining_amount")))
 
     col5, col6, col7 = st.columns(3)
-    col5.metric("目标完成率", _format_percent(summary.get("overall_progress_percent")))
-    col6.metric("高风险目标", summary.get("high_risk_goal_count", 0))
-    col7.metric("中风险目标", summary.get("medium_risk_goal_count", 0))
-    _show_dataframe("目标明细表", goals_analysis_df if goals_analysis_df is not None else goals_df)
+    col5.metric("Overall Progress", _format_percent(summary.get("overall_progress_percent")))
+    col6.metric("High-Risk Goals", summary.get("high_risk_goal_count", 0))
+    col7.metric("Medium-Risk Goals", summary.get("medium_risk_goal_count", 0))
+    _show_dataframe("Goal Details", goals_analysis_df if goals_analysis_df is not None else goals_df)
 
 
 def render_agent_trace_detail_tab(agent_chat_state: dict | None = None, workspace: dict | None = None):
@@ -184,9 +185,9 @@ def render_agent_trace_detail_tab(agent_chat_state: dict | None = None, workspac
     workspace = workspace or {}
     latest_turn = agent_chat_state.get("latest_turn_result") or {}
     if not latest_turn and not workspace:
-        st.info("当前还没有 Agent 执行记录。请先在 Copilot 主界面提问。")
+        st.info("No Agent execution record yet. Ask a question on Copilot Home first.")
         return
-    st.subheader("最近一次 Manager Plan")
+    st.subheader("Latest Manager Plan")
     st.json(latest_turn.get("manager_plan", {}))
     st.subheader("Tool Results")
     st.json(latest_turn.get("tool_results", []))
@@ -196,7 +197,7 @@ def render_agent_trace_detail_tab(agent_chat_state: dict | None = None, workspac
     st.json(latest_turn.get("trace", agent_chat_state.get("latest_trace", {})))
     st.subheader("Safety Result")
     st.json(latest_turn.get("safety_result", {}))
-    with st.expander("原 v2 Agent Workspace", expanded=False):
+    with st.expander("Legacy v2 Agent Workspace", expanded=False):
         st.json(workspace)
     workflow_report = workspace.get("workflow_report_markdown", "")
     if workflow_report:
@@ -221,8 +222,8 @@ def render_analysis_detail_page(
     """
     Render the unified analysis detail page.
     """
-    st.header("分析详情")
-    tabs = st.tabs(["预算与分类", "发票与现金流", "异常支出", "财务目标", "Agent 执行轨迹"])
+    st.header("Analysis Details")
+    tabs = st.tabs(["Budget & Categories", "Invoices & Cash Flow", "Suspicious Expenses", "Goals", "Agent Trace"])
     with tabs[0]:
         render_budget_detail_tab(transactions_df=transactions_df, budget_result=budget_result)
     with tabs[1]:

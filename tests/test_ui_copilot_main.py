@@ -10,9 +10,9 @@ def test_recommended_questions_not_empty():
 
 def test_recommended_questions_include_cashflow_anomaly_and_action_list():
     joined = "\n".join(RECOMMENDED_QUESTIONS)
-    assert "现金流" in joined
-    assert "支出" in joined or "可疑" in joined
-    assert "行动清单" in joined
+    assert "cash flow" in joined.lower()
+    assert "expenses" in joined.lower() or "suspicious" in joined.lower()
+    assert "action plan" in joined.lower()
 
 
 def test_render_copilot_main_accepts_latest_agent_turn():
@@ -34,6 +34,15 @@ def test_copilot_main_imports_onboarding_and_task_helpers():
     assert copilot_main.render_onboarding_panel
     assert copilot_main.build_recommended_tasks
     assert copilot_main.render_recommended_task_cards
+
+
+def test_copilot_main_imports_memory_context_helpers():
+    assert copilot_main.get_memory_context_for_task
+    assert copilot_main.render_memory_context_summary
+
+
+def test_copilot_main_imports_feedback_panel():
+    assert copilot_main.render_feedback_panel
 
 
 def test_copilot_main_does_not_restore_agent_api_switch():

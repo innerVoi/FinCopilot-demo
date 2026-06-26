@@ -1,8 +1,10 @@
-SAFETY_NOTE = "本行动项仅用于财务整理和风险提醒，不构成专业财务建议。"
+import hashlib
 
-HIGH_KEYWORDS = ["现金流缺口", "逾期", "断流", "高风险", "必须", "优先", "今天"]
-MEDIUM_KEYWORDS = ["确认", "补充", "核查", "回款", "余额", "发票"]
-LOW_KEYWORDS = ["复盘", "记录", "整理", "报告"]
+SAFETY_NOTE = "This action item is only for financial organization and risk reminders. It is not professional financial advice."
+
+HIGH_KEYWORDS = ["cash-flow gap", "overdue", "runway", "high risk", "must", "priority", "today"]
+MEDIUM_KEYWORDS = ["confirm", "add", "review", "receivable", "balance", "invoice"]
+LOW_KEYWORDS = ["retrospective", "record", "organize", "report"]
 VALID_PRIORITIES = {"high", "medium", "low"}
 CHAT_ACTION_STATUSES = {"pending", "in_progress", "done", "ignored"}
 
@@ -50,10 +52,10 @@ def infer_action_deadline(priority: str) -> str:
     """
     normalized_priority = str(priority or "").strip().lower()
     if normalized_priority == "high":
-        return "今天"
+        return "today"
     if normalized_priority == "low":
-        return "本周内"
-    return "3 天内"
+        return "this week"
+    return "within 3 days"
 
 
 def _normalize_action_status(status: str | None) -> str:
@@ -75,18 +77,28 @@ def build_chat_action_item(
     manager_plan = turn_result.get("manager_plan", {}) or {}
     title = normalize_chat_action_text(action_text)
     priority = infer_action_priority(title, manager_plan=manager_plan)
+    action_hash = hashlib.sha1(
+        "|".join(
+            [
+                title,
+                "agent_chat",
+                str((turn_result.get("user_query") or "")),
+                str(manager_plan.get("intent", "unknown")),
+            ]
+        ).encode("utf-8")
+    ).hexdigest()[:12]
     return {
-        "action_id": f"C{max(int(index), 1):03d}",
+        "action_id": f"C_{action_hash}",
         "title": title,
-        "description": "该行动项来自 FinCopilot 多 Agent 对话。",
+        "description": "This action item comes from a FinCopilot multi-agent conversation.",
         "source": "agent_chat",
         "priority": priority,
-        "reason": "Multi-Agent 对话建议将该事项纳入行动中心跟踪。",
+        "reason": "The multi-agent conversation recommended tracking this item in the Action Center.",
         "suggested_deadline": infer_action_deadline(priority),
         "recommended_steps": [
-            "核查相关原始凭证和业务事实。",
-            "在行动中心更新处理状态。",
-            "必要时回到 Agent Chat 补充信息并重新分析。",
+            "Review relevant source documents and business facts.",
+            "Update handling status in the Action Center.",
+            "Return to Agent Chat to add information and rerun analysis if needed.",
         ],
         "related_record": {
             "user_query": turn_result.get("user_query", ""),
@@ -150,7 +162,10 @@ def merge_chat_action_items(existing_items: list[dict] | None, new_items: list[d
         merged.append(normalized_item)
 
     for index, item in enumerate(merged, start=1):
-        item["action_id"] = f"C{index:03d}"
+        if not item.get("action_id"):
+            title = normalize_chat_action_text(item.get("title"))
+            digest = hashlib.sha1(f"{title}|{item.get('source', 'agent_chat')}".encode("utf-8")).hexdigest()[:12]
+            item["action_id"] = f"C_{digest}"
         item.setdefault("source", "agent_chat")
         item.setdefault("safety_note", SAFETY_NOTE)
     return merged

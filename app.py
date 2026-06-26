@@ -31,6 +31,9 @@ from agent.report_exporter import build_report_filename, encode_markdown_for_dow
 from agent.task_templates import get_task_options_for_ui
 from agent.tool_registry import list_available_tools
 from agent.workspace_builder import build_agent_workspace
+from memory.db import initialize_memory_db
+from memory.repository import ensure_default_workspace
+from memory.workspace import get_current_identity
 from src.anomaly_model import run_lof_detection
 from src.anomaly_rules import run_rule_based_anomaly_detection
 from src.budget_analyzer import analyze_budget
@@ -45,10 +48,10 @@ from src.summary_generator import generate_planning_summary
 from agent_api.config import get_agent_api_status
 from ui.assistant_home import render_assistant_home
 from ui.chat_page import render_chat_page
-from ui.action_report_page import render_action_report_page as render_v22_action_report_page
-from ui.analysis_detail_page import render_analysis_detail_page as render_v22_analysis_detail_page
+from ui.action_report_page import render_action_report_page as render_v23_action_report_page
+from ui.analysis_detail_page import render_analysis_detail_page as render_v23_analysis_detail_page
 from ui.copilot_main import render_copilot_main
-from ui.data_settings_page import render_data_settings_page as render_v22_data_settings_page
+from ui.data_settings_page import render_data_settings_page as render_v23_data_settings_page
 from ui.navigation import render_sidebar_navigation
 
 
@@ -224,7 +227,7 @@ def build_workspace(selected_task_id, analysis):
 
 def render_data_management(analysis, transactions_file, invoices_file, goals_file):
     st.header("数据管理")
-    st.info("上传控件位于左侧 sidebar；未上传时系统使用 data/ 目录下的默认样例数据。")
+    st.info("上传控件位于左侧 sidebar；Not uploaded时系统使用 data/ 目录下的默认样例数据。")
     if analysis["load_error"]:
         st.error(analysis["load_error"])
         return
@@ -233,34 +236,34 @@ def render_data_management(analysis, transactions_file, invoices_file, goals_fil
     st.markdown(
         f"""
         **当前数据来源**
-        - 交易流水：{"用户上传" if transactions_file else "默认样例"}
-        - 发票数据：{"用户上传" if invoices_file else "默认样例"}
-        - 财务目标：{"用户上传" if goals_file else "默认样例"}
+        - Transactions：{"用户上传" if transactions_file else "默认样例"}
+        - Invoices：{"用户上传" if invoices_file else "默认样例"}
+        - Goals：{"用户上传" if goals_file else "默认样例"}
         """
     )
-    show_dataframe("交易流水预览", analysis["raw_transactions_df"])
-    show_dataframe("分类后交易流水预览", analysis["transactions_df"])
-    show_dataframe("发票数据预览", analysis["invoices_df"])
-    show_dataframe("财务目标预览", analysis["goals_df"])
+    show_dataframe("Transactions预览", analysis["raw_transactions_df"])
+    show_dataframe("分类后Transactions预览", analysis["transactions_df"])
+    show_dataframe("Invoices预览", analysis["invoices_df"])
+    show_dataframe("Goals预览", analysis["goals_df"])
 
-    with st.expander("字段说明与数据质量提示"):
+    with st.expander("Field Guide与数据质量提示"):
         st.markdown(
             """
-            - 交易流水需要包含日期、金额、类型、商户或描述等字段。
-            - 发票数据需要包含金额、到期日和支付状态。
-            - 财务目标需要包含目标金额、当前金额、截止日期和优先级。
-            - 当前 Demo 仅做整理和风险提醒，不连接真实银行账户或发票系统。
+            - Transactions需要包含日期、金额、类型、商户或描述等字段。
+            - Invoices需要包含金额、到期日 and 支付Status。
+            - Goals需要包含目标金额、当前金额、截止日期 and 优先级。
+            - 当前 Demo 仅做整理 and Risk Alert，不连接真实银行账户或发票系统。
             """
         )
 
 
 def render_budget_page(analysis):
     st.header("预算与分类")
-    st.info("展示交易分类结果、预算统计、类别支出结构和月度收支情况。")
+    st.info("展示交易分类结果、预算统计、类别支出结构 and 月度收支情况。")
     budget_result = analysis["budget_result"]
     transactions_df = analysis["transactions_df"]
     if budget_result is None or transactions_df is None:
-        st.warning("请先在“数据与设置”页确认数据读取成功。")
+        st.warning("请先在“Data & Settings”页确认数据读取成功。")
         return
     summary = budget_result["summary"]
 
@@ -300,7 +303,7 @@ def render_invoice_page(analysis):
     invoice_result = analysis["invoice_result"]
     cashflow_result = analysis["cashflow_result"]
     if invoice_result is None:
-        st.warning("请先在“数据与设置”页确认数据读取成功。")
+        st.warning("请先在“Data & Settings”页确认数据读取成功。")
         return
 
     summary = invoice_result["summary"]
@@ -341,17 +344,17 @@ def render_invoice_page(analysis):
 
 def render_anomaly_page(analysis, use_llm):
     st.header("异常支出识别")
-    st.info("规则/统计识别适合明确异常；LOF 模型适合发现偏离局部交易模式的潜在异常。")
+    st.info("规则/统计识别适合明确异常；LOF Model适合发现偏离局部交易模式的潜在异常。")
     detection_method = st.radio(
         "选择异常检测方式",
-        ["规则/统计识别", "LOF 模型识别"],
+        ["规则/统计识别", "LOF Model识别"],
         key="financial_analysis_detection_method",
     )
 
     if detection_method == "规则/统计识别":
         rule_anomalies_df = analysis["rule_anomalies_df"]
         if rule_anomalies_df is None:
-            st.warning("请先在“数据与设置”页确认数据读取成功。")
+            st.warning("请先在“Data & Settings”页确认数据读取成功。")
         elif rule_anomalies_df.empty:
             st.success("当前未发现明显异常支出。")
         else:
@@ -386,9 +389,9 @@ def render_anomaly_page(analysis, use_llm):
     else:
         lof_result_df = analysis["lof_result_df"]
         if analysis["lof_error"]:
-            st.error(f"LOF 模型检测失败：{analysis['lof_error']}")
+            st.error(f"LOF Model检测失败：{analysis['lof_error']}")
         elif lof_result_df is None:
-            st.warning("请先在“数据与设置”页确认数据读取成功。")
+            st.warning("请先在“Data & Settings”页确认数据读取成功。")
         elif lof_result_df.empty:
             st.warning("当前没有可用于 LOF 检测的交易数据。")
         else:
@@ -430,10 +433,10 @@ def render_anomaly_page(analysis, use_llm):
 
 
 def render_goals_page(analysis):
-    st.header("财务目标")
+    st.header("Goals")
     goal_result = analysis["goal_result"]
     if goal_result is None:
-        st.warning("请先在“数据与设置”页确认数据读取成功。")
+        st.warning("请先在“Data & Settings”页确认数据读取成功。")
         return
     goal_summary = goal_result["summary"]
     goals_analysis_df = goal_result["goals"]
@@ -473,7 +476,7 @@ def render_goals_page(analysis):
 def render_financial_analysis(analysis, use_llm):
     st.header("财务分析")
     tab_budget, tab_invoice, tab_anomaly, tab_goals = st.tabs(
-        ["预算与分类", "发票与现金流", "异常支出识别", "财务目标"]
+        ["预算与分类", "发票与现金流", "异常支出识别", "Goals"]
     )
     with tab_budget:
         render_budget_page(analysis)
@@ -488,19 +491,19 @@ def render_financial_analysis(analysis, use_llm):
 def render_action_list(workspace, selected_task_id, editable=True, key_prefix=""):
     ranked_actions = workspace.get("ranked_action_items", [])
     if not ranked_actions:
-        st.info("当前还没有行动项。请先在“Copilot 主界面”提问，或在“分析详情”中查看 Agent 执行轨迹。")
+        st.info("当前还没有Action Items。请先在“Copilot Home”提问，或在“Analysis Details”中查看 Agent 执行轨迹。")
         return
 
     progress_summary = workspace.get("progress_summary", {})
     action_summary = workspace.get("action_summary", {})
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("行动项总数", action_summary.get("total", 0))
+    col1.metric("Action Items总数", action_summary.get("total", 0))
     col2.metric("高优先级", action_summary.get("high", 0))
     col3.metric("仍需处理", progress_summary.get("active_count", 0))
     col4.metric("完成率", f"{progress_summary.get('completion_rate', 0.0) * 100:.0f}%")
 
     status_filter = st.selectbox(
-        "按状态筛选",
+        "按Status筛选",
         ["全部"] + STATUS_OPTIONS,
         key=f"{key_prefix}action_status_filter",
     )
@@ -510,14 +513,14 @@ def render_action_list(workspace, selected_task_id, editable=True, key_prefix=""
 
     actions_df = action_items_to_dataframe(filtered_actions)
     if actions_df.empty:
-        st.info("当前筛选条件下没有行动项。")
+        st.info("当前筛选条件下没有Action Items。")
     else:
         st.dataframe(actions_df, use_container_width=True)
 
-    st.markdown("**Top 行动项详情：**")
+    st.markdown("**Top Action Items详情：**")
     for item in filtered_actions[:3]:
         with st.expander(f"{item.get('priority', '')} | {item.get('status', '')} | {item.get('title', '')}"):
-            st.markdown(f"**来源：** {item.get('source', '')}")
+            st.markdown(f"**Source: ** {item.get('source', '')}")
             st.markdown(f"**原因：** {item.get('reason', '')}")
             st.markdown(f"**建议截止时间：** {item.get('suggested_deadline', '')}")
             st.markdown("**建议步骤：**")
@@ -526,7 +529,7 @@ def render_action_list(workspace, selected_task_id, editable=True, key_prefix=""
             st.caption(item.get("safety_note", ""))
 
     if editable:
-        st.markdown("**更新行动项状态：**")
+        st.markdown("**更新Action ItemsStatus: **")
         for item in filtered_actions[:5]:
             action_id = item.get("action_id", "")
             current_status = item.get("status", "pending")
@@ -534,7 +537,7 @@ def render_action_list(workspace, selected_task_id, editable=True, key_prefix=""
                 current_status = "pending"
             with st.expander(f"{current_status} | {item.get('title', '')}"):
                 new_status = st.selectbox(
-                    "更新状态",
+                    "更新Status",
                     STATUS_OPTIONS,
                     index=STATUS_OPTIONS.index(current_status),
                     key=f"{key_prefix}status_{selected_task_id}_{action_id}",
@@ -548,7 +551,7 @@ def render_action_list(workspace, selected_task_id, editable=True, key_prefix=""
                     ),
                     key=f"{key_prefix}note_{selected_task_id}_{action_id}",
                 )
-                if st.button("保存状态", key=f"{key_prefix}save_status_{selected_task_id}_{action_id}"):
+                if st.button("保存Status", key=f"{key_prefix}save_status_{selected_task_id}_{action_id}"):
                     st.session_state["agent_state"] = update_action_status(
                         st.session_state["agent_state"],
                         task_id=selected_task_id,
@@ -556,30 +559,30 @@ def render_action_list(workspace, selected_task_id, editable=True, key_prefix=""
                         new_status=new_status,
                         note=note,
                     )
-                    st.success("行动项状态已保存。")
+                    st.success("Action ItemsStatus已保存。")
                     st.rerun()
 
-    with st.expander("最近状态更新记录"):
+    with st.expander("最近Status更新记录"):
         recent_events = get_recent_progress_events(st.session_state["agent_state"], limit=10)
         if recent_events:
             st.dataframe(pd.DataFrame(recent_events), use_container_width=True)
         else:
-            st.info("当前还没有行动项状态更新记录。")
+            st.info("当前还没有Action ItemsStatus更新记录。")
 
 
 def render_chat_action_items_section():
-    st.subheader("来自 Agent Chat 的行动项")
+    st.subheader("来自 Agent Chat 的Action Items")
     st.session_state["agent_chat_state"] = ensure_agent_chat_state(
         st.session_state.get("agent_chat_state", {})
     )
     chat_action_items = st.session_state["agent_chat_state"].get("chat_action_items", [])
     if not chat_action_items:
-        st.info("当前还没有来自 Agent Chat 的行动项。请先在“Copilot 主界面”提出一个问题。")
+        st.info("当前还没有来自 Agent Chat 的Action Items。请先在“Copilot Home”提出一个问题。")
         return
 
     summary = summarize_chat_action_items(chat_action_items)
     col1, col2, col3, col4, col5 = st.columns(5)
-    col1.metric("Chat 行动项总数", summary.get("total", 0))
+    col1.metric("Chat Action Items总数", summary.get("total", 0))
     col2.metric("高优先级", summary.get("high", 0))
     col3.metric("中优先级", summary.get("medium", 0))
     col4.metric("低优先级", summary.get("low", 0))
@@ -599,7 +602,7 @@ def render_chat_action_items_section():
     ]
     st.dataframe(pd.DataFrame(display_rows), use_container_width=True)
 
-    st.markdown("**更新 Chat 行动项状态：**")
+    st.markdown("**更新 Chat Action ItemsStatus: **")
     updated_items = [dict(item) for item in chat_action_items]
     for index, item in enumerate(updated_items):
         action_id = item.get("action_id", f"C{index + 1:03d}")
@@ -608,13 +611,13 @@ def render_chat_action_items_section():
             current_status = "pending"
         with st.expander(f"{current_status} | {item.get('title', '')}"):
             new_status = st.selectbox(
-                "更新状态",
+                "更新Status",
                 CHAT_ACTION_STATUS_OPTIONS,
                 index=CHAT_ACTION_STATUS_OPTIONS.index(current_status),
                 key=f"chat_action_status_{action_id}",
             )
             updated_items[index]["status"] = new_status
-            st.markdown(f"**优先级：** {item.get('priority', '')}")
+            st.markdown(f"**Priority: ** {item.get('priority', '')}")
             st.markdown(f"**建议截止时间：** {item.get('suggested_deadline', '')}")
             st.markdown(f"**原因：** {item.get('reason', '')}")
             st.markdown("**建议步骤：**")
@@ -622,18 +625,18 @@ def render_chat_action_items_section():
                 st.markdown(f"- {step}")
             st.caption(item.get("safety_note", ""))
 
-    if st.button("保存 Chat 行动项状态", key="save_chat_action_statuses"):
+    if st.button("保存 Chat Action ItemsStatus", key="save_chat_action_statuses"):
         st.session_state["agent_chat_state"] = update_chat_action_items(
             st.session_state["agent_chat_state"],
             updated_items,
         )
-        st.success("Chat 行动项状态已保存。")
+        st.success("Chat Action ItemsStatus已保存。")
         st.rerun()
 
 
 def render_agent_workspace(analysis, selected_task_id):
     st.header("Agent 工作台")
-    st.markdown("这里展示 FinCopilot 的任务规划、工具调用、追问补全、行动清单、进展跟踪和工作流报告。")
+    st.markdown("这里展示 FinCopilot 的任务规划、工具调用、追问补全、行动清单、进展跟踪 and 工作流Reports。")
     task_options = get_task_options_for_ui()
     selected_task_name = st.selectbox(
         "请选择 Copilot 要完成的任务",
@@ -693,7 +696,7 @@ def render_agent_workspace(analysis, selected_task_id):
         st.markdown(f"{index}. {step}")
     plan_status = task_plan.get("plan_status", "unknown")
     if plan_status == "ready":
-        st.success("ready：关键数据和工具已具备，可以执行当前任务计划。")
+        st.success("ready：关键数据 and 工具已具备，可以执行当前任务计划。")
     elif plan_status == "needs_clarification":
         st.warning("needs_clarification：可以先做初步分析，但生成行动计划前建议补充信息。")
     else:
@@ -702,7 +705,7 @@ def render_agent_workspace(analysis, selected_task_id):
     data_check = workspace["data_check"]
     clarification_status = workspace.get("clarification_status", {})
     st.subheader("3. 数据完整性检查")
-    st.markdown(f"**检查状态：** {data_check.get('status', 'unknown')}")
+    st.markdown(f"**检查Status: ** {data_check.get('status', 'unknown')}")
     for title, key in [
         ("已具备的信息", "available_items"),
         ("缺失或不确定的信息", "missing_items"),
@@ -755,12 +758,12 @@ def render_agent_workspace(analysis, selected_task_id):
 
     st.subheader("10. 行动清单与进展跟踪")
     render_action_list(workspace, selected_task_id, editable=True, key_prefix="workspace_")
-    if st.button("重置当前任务行动项状态"):
+    if st.button("重置当前任务Action ItemsStatus"):
         st.session_state["agent_state"] = reset_action_progress(
             st.session_state["agent_state"],
             task_id=selected_task_id,
         )
-        st.warning("当前任务的行动项状态已重置。")
+        st.warning("当前任务的Action ItemsStatus已重置。")
         st.rerun()
 
     st.subheader("11. Agent 进展结论")
@@ -768,7 +771,7 @@ def render_agent_workspace(analysis, selected_task_id):
     st.subheader("12. Agent 初步结论")
     st.info(workspace.get("initial_conclusion", ""))
 
-    st.subheader("13. Agent 工作流报告")
+    st.subheader("13. Agent 工作流Reports")
     render_workflow_report(workspace, selected_task_id)
 
     st.subheader("14. 下一步")
@@ -783,13 +786,13 @@ def render_agent_workspace(analysis, selected_task_id):
 
 def render_action_center(workspace, selected_task_id):
     st.header("行动中心")
-    st.caption("集中展示当前任务生成的行动项、处理状态和最近进展。")
+    st.caption("集中展示当前任务生成的Action Items、处理Status and 最近进展。")
     render_chat_action_items_section()
-    st.subheader("来自 Agent 工作台的行动项")
+    st.subheader("来自 Agent 工作台的Action Items")
     render_action_list(workspace, selected_task_id, editable=True, key_prefix="center_")
-    with st.expander("复制带状态的行动清单 Markdown"):
+    with st.expander("复制带Status的行动清单 Markdown"):
         st.text_area(
-            "带状态的行动清单",
+            "带Status的行动清单",
             action_items_to_status_markdown(workspace.get("ranked_action_items", [])),
             height=350,
         )
@@ -798,19 +801,19 @@ def render_action_center(workspace, selected_task_id):
 def render_workflow_report(workspace, selected_task_id):
     report_md = workspace.get("workflow_report_markdown", "")
     if not report_md:
-        st.info("当前暂无可生成的 Agent 工作流报告。")
+        st.info("当前暂无可生成的 Agent 工作流Reports。")
         return
-    st.markdown("以下报告汇总了当前任务的 Agent 执行过程、工具结果、行动清单和进展状态。")
-    with st.expander("预览 Agent 工作流报告", expanded=False):
+    st.markdown("以下Reports汇总了当前任务的 Agent 执行过程、工具结果、行动清单 and 进展Status。")
+    with st.expander("预览 Agent 工作流Reports", expanded=False):
         st.markdown(report_md)
     st.text_area(
-        "复制 Markdown 报告",
+        "复制 Markdown Reports",
         report_md,
         height=400,
         key=f"workflow_report_{selected_task_id}",
     )
     st.download_button(
-        label="下载 Markdown 报告",
+        label="下载 Markdown Reports",
         data=encode_markdown_for_download(report_md),
         file_name=build_report_filename(selected_task_id),
         mime="text/markdown",
@@ -819,30 +822,30 @@ def render_workflow_report(workspace, selected_task_id):
 
 
 def render_report_center(analysis, workspace, selected_task_id, use_llm):
-    st.header("报告中心")
-    st.info("集中展示 Copilot 摘要、Agent 工作流报告、Multi-Agent 对话报告和带状态行动清单。")
+    st.header("Reports中心")
+    st.info("集中展示 Copilot 摘要、Agent 工作流Reports、Multi-Agent 对话Reports and 带Status行动清单。")
     chat_state = ensure_agent_chat_state(st.session_state.get("agent_chat_state", {}))
     latest_report_markdown = chat_state.get("latest_report_markdown", "")
     latest_trace_markdown = chat_state.get("latest_trace_markdown", "")
 
-    st.subheader("最近一次 Multi-Agent 对话报告")
+    st.subheader("最近一次 Multi-Agent 对话Reports")
     if latest_report_markdown:
-        with st.expander("预览最近一次 Multi-Agent 报告", expanded=True):
+        with st.expander("预览最近一次 Multi-Agent Reports", expanded=True):
             st.markdown(latest_report_markdown)
         st.text_area(
-            "复制最近一次 Multi-Agent 报告",
+            "复制最近一次 Multi-Agent Reports",
             latest_report_markdown,
             height=320,
             key="latest_multi_agent_report_copy",
         )
         st.download_button(
-            label="下载最近一次 Multi-Agent 报告",
+            label="下载最近一次 Multi-Agent Reports",
             data=latest_report_markdown.encode("utf-8"),
             file_name="fincopilot_multi_agent_report.md",
             mime="text/markdown",
         )
     else:
-        st.info("当前还没有 Multi-Agent 对话报告。请先在“Copilot 主界面”提出一个问题。")
+        st.info("当前还没有 Multi-Agent 对话Reports。请先在“Copilot Home”提出一个问题。")
 
     st.subheader("最近一次 Multi-Agent Trace")
     if latest_trace_markdown:
@@ -865,13 +868,13 @@ def render_report_center(analysis, workspace, selected_task_id, use_llm):
         if latest_trace:
             st.markdown(trace_to_markdown(latest_trace))
         else:
-            st.info("当前还没有 Multi-Agent Trace。")
+            st.info("No Multi-Agent trace is available yet.")
 
     if "planning_summary" not in st.session_state:
         st.session_state["planning_summary"] = None
 
     if analysis["budget_result"] is None or analysis["invoice_result"] is None or analysis["goals_df"] is None:
-        st.warning("请先在“数据与设置”页确认数据读取成功。")
+        st.warning("请先在“Data & Settings”页确认数据读取成功。")
     else:
         button_label = "重新生成本期财务规划摘要" if st.session_state["planning_summary"] else "生成本期财务规划摘要"
         if st.button(button_label):
@@ -889,11 +892,11 @@ def render_report_center(analysis, workspace, selected_task_id, use_llm):
             st.subheader("Copilot 财务规划摘要")
             st.markdown(st.session_state["planning_summary"])
 
-    st.subheader("Agent 工作流报告")
+    st.subheader("Agent 工作流Reports")
     render_workflow_report(workspace, selected_task_id)
-    st.subheader("带状态行动清单 Markdown")
+    st.subheader("带Status行动清单 Markdown")
     st.text_area(
-        "复制带状态的行动清单",
+        "复制带Status的行动清单",
         action_items_to_status_markdown(workspace.get("ranked_action_items", [])),
         height=300,
     )
@@ -907,7 +910,7 @@ def render_report_center(analysis, workspace, selected_task_id, use_llm):
 
 
 def render_analysis_detail_page(analysis, selected_task_id, use_llm):
-    st.header("分析详情")
+    st.header("Analysis Details")
     tab_financial, tab_workspace = st.tabs(["财务分析", "Agent 执行轨迹"])
     with tab_financial:
         render_financial_analysis(analysis, use_llm)
@@ -916,8 +919,8 @@ def render_analysis_detail_page(analysis, selected_task_id, use_llm):
 
 
 def render_action_report_page(analysis, workspace, selected_task_id, use_llm):
-    st.header("行动与报告")
-    tab_actions, tab_report, tab_trace = st.tabs(["行动项", "报告", "Trace"])
+    st.header("Actions & Reports")
+    tab_actions, tab_report, tab_trace = st.tabs(["Action Items", "Reports", "Trace"])
     with tab_actions:
         render_action_center(workspace, selected_task_id)
     with tab_report:
@@ -930,40 +933,40 @@ def render_action_report_page(analysis, workspace, selected_task_id, use_llm):
         elif chat_state.get("latest_trace"):
             st.markdown(trace_to_markdown(chat_state.get("latest_trace")))
         else:
-            st.info("当前还没有 Multi-Agent Trace。")
+            st.info("No Multi-Agent trace is available yet.")
 
 
 def render_data_settings_page(analysis, transactions_file, invoices_file, goals_file):
-    st.header("数据与设置")
-    tab_data, tab_api, tab_safety = st.tabs(["数据上传与预览", "API 与模型", "安全边界"])
+    st.header("Data & Settings")
+    tab_data, tab_api, tab_safety = st.tabs(["Data Upload & Preview", "API & Model", "Safety Boundaries"])
     with tab_data:
         render_data_management(analysis, transactions_file, invoices_file, goals_file)
     with tab_api:
         status = get_agent_api_status()
         if status.get("mode") == "api_agent":
-            st.success(status.get("user_message", "当前使用真实 Agent 分析。"))
+            st.success(status.get("user_message", "Live Agent analysis is active."))
         else:
-            st.info(status.get("user_message", "当前真实 Agent 暂不可用，系统将自动 fallback。"))
-        st.markdown(f"**模型：** {status.get('model', 'gpt-5.4-mini')}")
-        st.markdown(f"**API Base URL：** {status.get('base_url', '')}")
+            st.info(status.get("user_message", "The live Agent API is unavailable. FinCopilot will automatically fall back."))
+        st.markdown(f"**Model:** {status.get('model', 'gpt-5.4-mini')}")
+        st.markdown(f"**API Base URL:** {status.get('base_url', '')}")
         st.markdown(
-            "**模型配置：** 可通过环境变量 `OPENAI_AGENT_MODEL` 或 `OPENAI_MODEL` 覆盖；"
-            "可通过 `OPENAI_BASE_URL` 覆盖 OpenAI 兼容接口地址。"
+            "**Model configuration:** override with `OPENAI_AGENT_MODEL` or `OPENAI_MODEL`; "
+            "override the OpenAI-compatible endpoint with `OPENAI_BASE_URL`."
         )
-        st.markdown("**开发调试：** 如需强制 fallback，可设置 `ENABLE_AGENT_API=false`。")
+        st.markdown("**Developer override:** Set `ENABLE_AGENT_API=false` to force fallback mode.")
     with tab_safety:
-        st.markdown("FinCopilot 仅用于财务整理、风险提醒和教育性支持。")
-        st.markdown("- 不提供投资建议")
-        st.markdown("- 不提供税务建议")
-        st.markdown("- 不提供法律建议")
-        st.markdown("- 不提供债务处置建议")
-        st.markdown("- 不认定任何交易为欺诈")
-        st.markdown("- 不执行真实付款或转账")
+        st.markdown("FinCopilot is for financial organization, risk reminders, and educational support only.")
+        st.markdown("- Does not provide investment advice")
+        st.markdown("- Does not provide tax advice")
+        st.markdown("- Does not provide legal advice")
+        st.markdown("- Does not provide debt-resolution advice")
+        st.markdown("- Does not determine that any transaction is fraud")
+        st.markdown("- Does not execute real payments or transfers")
         st.caption(get_disclaimer())
 
 
 st.set_page_config(
-    page_title="FinCopilot V2.2",
+    page_title="FinCopilot V2.3",
     page_icon="💸",
     layout="wide",
 )
@@ -975,6 +978,16 @@ task_options_for_state = get_task_options_for_ui()
 default_task_id = next(iter(task_options_for_state.values()))
 if "selected_task_id" not in st.session_state:
     st.session_state["selected_task_id"] = default_task_id
+
+try:
+    memory_db_path = initialize_memory_db()
+    ensure_default_workspace(db_path=memory_db_path)
+    st.session_state["memory_db_path"] = memory_db_path
+    st.session_state.pop("memory_init_error", None)
+except Exception as exc:
+    st.session_state["memory_init_error"] = str(exc)
+
+current_identity = get_current_identity(st.session_state)
 
 page = render_sidebar_navigation()
 use_llm = False
@@ -1007,7 +1020,7 @@ agent_context_summary = build_agent_context_summary(
     }
 )
 
-if page == "Copilot 主界面":
+if page == "Copilot Home":
     render_copilot_main(
         agent_context_summary=agent_context_summary,
         transactions_df=analysis["transactions_df"],
@@ -1015,8 +1028,8 @@ if page == "Copilot 主界面":
         goals_df=analysis["goals_df"],
         latest_agent_turn=st.session_state.get("agent_chat_state", {}).get("latest_turn_result"),
     )
-elif page == "分析详情":
-    render_v22_analysis_detail_page(
+elif page == "Analysis Details":
+    render_v23_analysis_detail_page(
         transactions_df=analysis["transactions_df"],
         invoices_df=analysis["invoices_df"],
         goals_df=analysis["goals_df"],
@@ -1029,13 +1042,13 @@ elif page == "分析详情":
         workspace=workspace_for_pages,
         agent_chat_state=st.session_state.get("agent_chat_state", {}),
     )
-elif page == "行动与报告":
-    render_v22_action_report_page(
+elif page == "Actions & Reports":
+    render_v23_action_report_page(
         workspace=workspace_for_pages,
         agent_chat_state=st.session_state.get("agent_chat_state", {}),
     )
-elif page == "数据与设置":
-    render_v22_data_settings_page(
+elif page == "Data & Settings":
+    render_v23_data_settings_page(
         transactions_df=analysis["transactions_df"],
         invoices_df=analysis["invoices_df"],
         goals_df=analysis["goals_df"],

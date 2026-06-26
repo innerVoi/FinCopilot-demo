@@ -22,11 +22,12 @@ SOURCE_SCORE = {
 }
 
 DEADLINE_SCORE = {
-    "今天": 3,
-    "3 天内": 2,
-    "7 天内": 1,
-    "本月内": 1,
-    "下次复查前": 1,
+    "today": 3,
+    "within 3 days": 2,
+    "within 7 days": 1,
+    "this month": 1,
+    "this week": 1,
+    "before the next review": 1,
 }
 
 

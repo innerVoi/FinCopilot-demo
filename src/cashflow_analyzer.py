@@ -72,33 +72,33 @@ def assess_cashflow_risk(
 
     if projected_balance_30d < 0:
         risk_level = "high"
-        risk_reasons.append("未来 30 天预计余额为负。")
+        risk_reasons.append("Projected balance over the next 30 days is negative.")
     if cash_buffer_days < 7:
         risk_level = "high"
-        risk_reasons.append("当前现金缓冲低于 7 天。")
+        risk_reasons.append("Current cash buffer is below 7 days.")
 
     if risk_level != "high":
         if cash_buffer_days < 30:
             risk_level = "medium"
-            risk_reasons.append("当前现金缓冲低于 30 天。")
+            risk_reasons.append("Current cash buffer is below 30 days.")
         if (
             current_balance_estimate > 0
             and upcoming_invoice_outflow_30d > current_balance_estimate * 0.5
         ):
             risk_level = "medium"
-            risk_reasons.append("未来 30 天待付发票金额超过当前余额的 50%。")
+            risk_reasons.append("Invoices due in the next 30 days exceed 50% of the current balance.")
         if projected_operating_cashflow_30d < 0:
             risk_level = "medium"
-            risk_reasons.append("近期平均日净现金流为负。")
+            risk_reasons.append("Recent average daily net cash flow is negative.")
 
     if not risk_reasons:
-        risk_reasons.append("当前上传数据下，未来 30 天现金流压力较低。")
+        risk_reasons.append("Based on the uploaded data, cash-flow pressure over the next 30 days appears low.")
 
     recommended_actions = [
-        "核查未来 30 天到期发票，优先确认逾期和大额发票。",
-        "检查可推迟或可优化的非必要支出。",
-        "确认主要客户回款时间，避免付款集中造成现金流压力。",
-        "为固定支出和供应商付款预留现金缓冲。",
+        "Review invoices due in the next 30 days, especially overdue or large invoices.",
+        "Check whether non-essential expenses can be delayed or optimized.",
+        "Confirm expected collection dates from major customers.",
+        "Reserve a cash buffer for fixed expenses and supplier payments.",
     ]
 
     return {
@@ -141,8 +141,8 @@ def analyze_cashflow(transactions_df, invoice_result=None, horizon_days=30) -> d
         "risk_reasons": risk_result["risk_reasons"],
         "recommended_actions": risk_result["recommended_actions"],
         "assumptions": [
-            "当前余额估算基于上传交易流水中的收入总额减支出总额。",
-            "未来 30 天运营现金流基于当前数据覆盖期的平均日净现金流估算。",
-            "现金流分析是 demo 级估算，不代表真实账户余额或专业财务预测。",
+            "Current balance estimate is based on uploaded transaction income minus expenses.",
+            "Projected operating cash flow over 30 days is estimated from average daily net cash flow in the uploaded data.",
+            "Cash-flow analysis is a demo-level estimate and does not represent a real bank balance or professional financial forecast.",
         ],
     }

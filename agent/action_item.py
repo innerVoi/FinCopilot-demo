@@ -9,7 +9,7 @@ VALID_SOURCES = {
     "summary",
 }
 
-DEFAULT_SAFETY_NOTE = "本行动项仅用于财务整理和风险提醒，不构成专业财务建议。"
+DEFAULT_SAFETY_NOTE = "These action items are only for financial organization and risk reminders. They are not professional financial advice."
 
 
 def normalize_priority(priority: str | None) -> str:
@@ -62,7 +62,7 @@ def make_action_item(
         "source": normalize_source(source),
         "priority": normalize_priority(priority),
         "reason": str(reason or ""),
-        "suggested_deadline": str(suggested_deadline or "下次复查前"),
+        "suggested_deadline": str(suggested_deadline or "before the next review"),
         "recommended_steps": list(recommended_steps or []),
         "related_record": dict(related_record or {}),
         "status": status or "pending",
@@ -91,13 +91,13 @@ def action_items_to_markdown(action_items: list[dict]) -> str:
     """
     Convert action items to copyable Markdown.
     """
-    lines = ["# FinCopilot 行动清单"]
+    lines = ["# FinCopilot Action Items"]
     for item in action_items or []:
         lines.append(f"## [{item.get('priority', '')}] {item.get('title', '')}")
-        lines.append(f"- 来源：{item.get('source', '')}")
-        lines.append(f"- 原因：{item.get('reason', '')}")
-        lines.append(f"- 建议截止时间：{item.get('suggested_deadline', '')}")
-        lines.append("- 建议步骤：")
+        lines.append(f"- Source: {item.get('source', '')}")
+        lines.append(f"- Reason: {item.get('reason', '')}")
+        lines.append(f"- Suggested deadline: {item.get('suggested_deadline', '')}")
+        lines.append("- Recommended steps:")
         for step in item.get("recommended_steps", []):
             lines.append(f"  - {step}")
         lines.append("")
